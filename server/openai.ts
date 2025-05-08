@@ -17,22 +17,21 @@ export async function extractKeywords(jobDescription: string): Promise<string[]>
         {
           role: "system",
           content: 
-            "You are an expert talent-acquisition analyst who optimizes résumés for applicant-tracking systems (ATS).\n\n" +
-            "TASK\n" +
-            "1. Read the job description enclosed in triple back-ticks.\n" +
-            "2. Produce a JSON object with exactly these top-level keys:\n\n" +
-            "   \"Core_Hard_Skills\": list (8-12) of concrete technical skills, tools, or methodologies.\n" +
-            "   \"Core_Soft_Skills\": list (6-10) of interpersonal / leadership competencies.\n" +
-            "   \"Domain_Knowledge\": list of industry-specific terms, regulations, or frameworks.\n" +
-            "   \"Certifications_Education\": list of degrees, licenses, or certificates explicitly mentioned.\n" +
-            "   \"Experience_Level\": list of phrases that signal seniority or years of experience.\n" +
-            "   \"Keywords_Ranked\": array of up to 25 objects, each object = \n" +
-            "      { \"keyword\": term,\n" +
-            "        \"category\": one of [Hard, Soft, Domain, Cert/Edu, Exp],\n" +
-            "        \"rationale\": ≤ 10-word note why it matters }\n" +
-            "      Ordered by descending relevance (1 = most critical).\n\n" +
-            "3. Only surface terms that appear verbatim or are unmistakably implied.\n" +
-            "4. Retain original spelling/casing; one word or phrase per list item.",
+            "You are an ATS (Applicant Tracking System) expert who specializes in identifying high-priority keywords from job descriptions that hiring systems scan for.\n\n" +
+            "TASK:\n" +
+            "Extract 15-20 important keywords from the provided job description, prioritizing:\n" +
+            "1. Hard skills and technical competencies\n" +
+            "2. Domain-specific knowledge areas\n" +
+            "3. Software/tools/platforms mentioned\n" +
+            "4. Certifications or qualifications\n" +
+            "5. Industry-specific terminology\n\n" +
+            "FORMATTING RULES:\n" +
+            "- Extract standalone keywords and key phrases only (typically 1-3 words)\n" +
+            "- Maintain original capitalization for proper nouns, acronyms and product names\n" +
+            "- Exclude generic soft skills unless heavily emphasized\n" +
+            "- Sort by priority (most important first)\n" +
+            "- Return as a JSON object with a 'keywords' array\n" +
+            "- Format: { \"keywords\": [\"keyword1\", \"keyword2\", ...] }",
         },
         {
           role: "user",
@@ -49,7 +48,36 @@ export async function extractKeywords(jobDescription: string): Promise<string[]>
     try {
       const result = JSON.parse(response.choices[0].message.content);
       console.log("Extracted keywords:", result.keywords);
-      return Array.isArray(result.keywords) ? result.keywords : [];
+      
+      // Extract keywords from the response
+      if (Array.isArray(result.keywords)) {
+        return result.keywords;
+      }
+      
+      // Fallback for compatibility with the old format
+      const keywords: string[] = [];
+      
+      // Extract from the Keywords_Ranked array if present
+      if (Array.isArray(result.Keywords_Ranked)) {
+        result.Keywords_Ranked.forEach((item: any) => {
+          if (item && typeof item.keyword === 'string') {
+            keywords.push(item.keyword);
+          }
+        });
+      }
+      
+      // Add from Core_Hard_Skills if present
+      if (Array.isArray(result.Core_Hard_Skills)) {
+        keywords.push(...result.Core_Hard_Skills);
+      }
+      
+      // Add from Domain_Knowledge if present
+      if (Array.isArray(result.Domain_Knowledge)) {
+        keywords.push(...result.Domain_Knowledge);
+      }
+      
+      // Return unique keywords
+      return [...new Set(keywords)];
     } catch (parseError) {
       console.error("Error parsing JSON from OpenAI response:", parseError);
       return [];
@@ -100,24 +128,33 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
         {
           role: "system",
           content: 
-            "You are a professional resume writer who helps optimize resumes to pass ATS systems. Review the provided CV and optimize it based on the keywords listed. Your task is to produce a clear, professional version that will pass ATS systems.\n\n" +
+            "You are a senior résumé strategist who specializes in applicant-tracking-system (ATS) optimization.\n\n" +
+            "OBJECTIVES\n" +
+            "1. Match ≥ 90% of high-priority keywords while staying fact-based.\n" +
+            "2. Strengthen each bullet using the A-R-T pattern (Action verb → Result metric → Tool/Technique).\n" +
+            "3. Keep total résumé length ≤ 2 pages, no graphics or tables.\n" +
+            "4. Maintain the candidate's original chronology and voice.\n" +
+            "5. DO NOT fabricate experience, dates, or credentials.\n\n" +
             "IMPORTANT GUIDELINES:\n" +
             "1. Maintain a professional tone - avoid hyperbolic or overly enthusiastic language\n" +
             "2. DO NOT use em dashes (—) - use regular hyphens (-) instead\n" +
             "3. DO NOT add bubbly or unnecessarily flowery descriptors\n" +
             "4. DO NOT use overly boastful language\n" +
-            "5. Structure should be clean and minimal\n" +
-            "6. Preserve the essential information and style of the original\n" +
-            "7. Naturally incorporate missing keywords where relevant without forcing them\n" +
-            "8. Return the optimized CV in HTML format with basic formatting. Use these specific HTML elements:\n" +
-            "   - For section titles: <h2 class=\"font-display text-lg border-b border-brown/30 pb-2 mb-3\">Title</h2>\n" +
-            "   - For paragraphs: <p class=\"mb-4 text-sm\">Content</p>\n" +
-            "   - For lists: <ul class=\"text-sm list-disc pl-4 space-y-1\"><li>Item</li></ul>\n" +
-            "   - Do NOT include ```html tags or markdown formatting in your response - ONLY return pure HTML",
+            "5. Use original spelling/casing for company names and titles\n" +
+            "6. Keep bullets ≤ 22 words; use numerals for all numbers\n" +
+            "7. Jobs ≥ 10 years old: trim to 1-2 bullets\n\n" +
+            "OUTPUT FORMAT:\n" +
+            "Return the optimized CV in HTML format with proper structure, keyword highlighting, and improved content. Use these specific HTML elements:\n" +
+            "- For section titles: <h2 class=\"font-display text-lg border-b border-brown/30 pb-2 mb-3\">Title</h2>\n" +
+            "- For paragraphs: <p class=\"mb-4 text-sm\">Content</p>\n" +
+            "- For lists: <ul class=\"text-sm list-disc pl-4 space-y-1\"><li>Item</li></ul>\n" +
+            "- For metrics and improvements: <span class=\"font-semibold\">30% increase</span>\n" +
+            "- For keywords: <span class=\"bg-green-100 px-1\">keyword</span>\n\n" +
+            "Do NOT include ```html tags or markdown formatting in your response - ONLY return pure HTML",
         },
         {
           role: "user",
-          content: `Here is my original CV:\n\n${originalCV}\n\nHere are the keywords to incorporate (some may already be present):\n${keywordsArray.join(", ")}\n\nMatching keywords already in CV: ${matchingKeywords.join(", ")}\nMissing keywords to add where appropriate: ${missingKeywords.join(", ")}`,
+          content: `JOB_DESCRIPTION: I've analyzed this job description and extracted keywords.\n\nORIGINAL_RESUME:\n${originalCV}\n\nKEYWORD_JSON:\n{\n  "keywords": [${keywordsArray.map(k => `"${k}"`).join(", ")}],\n  "matching_keywords": [${matchingKeywords.map(k => `"${k}"`).join(", ")}],\n  "missing_keywords": [${missingKeywords.map(k => `"${k}"`).join(", ")}]\n}\n\nPlease optimize my resume to incorporate these keywords naturally where appropriate, especially the missing ones, while maintaining factual accuracy.`,
         },
       ],
     });
