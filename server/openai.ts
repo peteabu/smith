@@ -665,19 +665,21 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
             "You are an expert resume editor whose goal is to optimize resumes to pass ATS systems by incorporating relevant keywords without fabricating experiences. " +
             "Analyze the resume and enhance it by incorporating missing keywords in a natural, honest way. " +
             "\n\nFOLLOW THESE RULES PRECISELY:" +
-            "\n1. DO NOT invent or fabricate work experiences, education, or skills not mentioned in the original resume" +
-            "\n2. DO rewrite bullet points to naturally incorporate the keywords missing from the resume" +
-            "\n3. DO add industry-standard skills sections if missing from the resume, but only include skills that seem reasonable based on the experience shown" +
-            "\n4. DO maintain the resume's original structure (sections, ordering)" +
-            "\n5. DO improve phrasing to use active voice and quantifiable achievements" +
-            "\n6. DO NOT add fictional jobs, education, or certifications" +
-            "\n7. DO focus primarily on incorporating the missing keywords by enhancing existing content" +
-            "\n8. DO preserve all original experience details even if rephrased" +
-            "\n\nYour task is to return the optimized resume text content that naturally incorporates more of the target keywords."
+            "\n1. INCLUDE THE COMPLETE RESUME CONTENT IN YOUR RESPONSE. DO NOT OMIT ANY SECTIONS OR CONTENT FROM THE ORIGINAL RESUME." +
+            "\n2. DO NOT invent or fabricate work experiences, education, or skills not mentioned in the original resume" +
+            "\n3. DO rewrite bullet points to naturally incorporate the keywords missing from the resume" +
+            "\n4. DO add industry-standard skills sections if missing from the resume, but only include skills that seem reasonable based on the experience shown" +
+            "\n5. DO maintain the resume's original structure (sections, ordering)" +
+            "\n6. DO improve phrasing to use active voice and quantifiable achievements" +
+            "\n7. DO NOT add fictional jobs, education, or certifications" +
+            "\n8. DO focus primarily on incorporating the missing keywords by enhancing existing content" +
+            "\n9. DO preserve all original experience details even if rephrased" +
+            "\n10. ALWAYS RETURN THE COMPLETE RESUME - DO NOT SUMMARIZE OR ABBREVIATE ANY PARTS" +
+            "\n\nYour task is to return the COMPLETE optimized resume text content that naturally incorporates more of the target keywords."
         },
         {
           role: "user",
-          content: `ORIGINAL RESUME:\n\n${originalCV}\n\nKEYWORDS TO INCORPORATE (${missingKeywords.length} missing):\n${missingKeywords.join(', ')}\n\nPlease optimize this resume to naturally include more of these keywords while maintaining honesty and the resume's overall structure. Target a keyword match rate of at least 70%.`
+          content: `ORIGINAL RESUME:\n\n${originalCV}\n\nKEYWORDS TO INCORPORATE (${missingKeywords.length} missing):\n${missingKeywords.join(', ')}\n\nPlease optimize this resume to naturally include more of these keywords while maintaining honesty and the resume's overall structure. IMPORTANT: Include ALL content from the original resume. Do not omit ANY sections or details. Target a keyword match rate of at least 70%.`
         }
       ]
     });
@@ -778,7 +780,7 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
       }
       
       // Check if it's a list item (starts with bullet or dash)
-      if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
+      if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*') || line.match(/^\d+\.\s/)) {
         // If we have a paragraph in progress, add it first
         addParagraph();
         currentList.push(line);
