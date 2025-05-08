@@ -88,16 +88,16 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
 
   return (
     <div className="bg-white border border-brown/30 rounded-lg p-6 paper-shadow">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
         <div>
           <h2 className="font-display text-lg">Enter your resume text</h2>
           <p className="text-sm text-brown">Paste your resume content to optimize for job descriptions</p>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 self-end sm:self-center">
           <button
             onClick={handlePasteResume}
-            className="font-mono text-xs py-1 px-3 border border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 flex items-center gap-1"
+            className="font-mono text-xs py-2 sm:py-1 px-3 border border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 flex items-center gap-1 mobile-button touch-feedback"
           >
             <Clipboard className="h-4 w-4 text-brown-dark" />
             <span className="text-brown-dark">Paste</span>
@@ -105,7 +105,7 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
           
           <button
             onClick={handleTogglePreview}
-            className="font-mono text-xs py-1 px-3 border border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="font-mono text-xs py-2 sm:py-1 px-3 border border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed mobile-button touch-feedback"
             disabled={!resumeText.trim()}
           >
             <Eye className="h-4 w-4 text-brown-dark" />
@@ -115,7 +115,7 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
       </div>
       
       {isPreviewMode ? (
-        <div className="whitespace-pre-wrap overflow-y-auto h-64 p-4 bg-cream font-mono text-sm border border-brown/30 rounded">
+        <div className="whitespace-pre-wrap overflow-y-auto h-64 sm:h-72 p-4 bg-cream font-mono text-sm border border-brown/30 rounded mobile-scroll">
           {resumeText || (
             <span className="text-brown-light italic">No resume content to preview</span>
           )}
@@ -125,11 +125,11 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
           value={resumeText}
           onChange={(e) => setResumeText(e.target.value)}
           placeholder="Paste your resume text here..."
-          className="w-full h-64 p-4 font-mono text-sm"
+          className="w-full h-64 sm:h-72 p-4 font-mono text-sm"
         />
       )}
       
-      <div className="flex justify-between items-center mt-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-4 gap-4">
         <div className="text-xs text-brown">
           <div className="flex items-center">
             <Type className="h-3 w-3 mr-1" />
@@ -140,7 +140,7 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
         <button
           onClick={handleSaveResume}
           disabled={isUploading || !resumeText.trim()}
-          className="font-mono text-md py-2 px-5 border border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+          className="font-mono text-md py-3 sm:py-2 px-5 border border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mobile-button touch-feedback"
         >
           {isUploading ? (
             <>
