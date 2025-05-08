@@ -164,9 +164,9 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
   }, [isAnalyzing]);
   
   return (
-    <div className="bg-white rounded-lg p-6 paper-shadow">
-      <h2 className="font-display text-lg mb-3">Job Description</h2>
-      <p className="text-sm text-brown mb-4">
+    <div className="bg-white rounded-lg p-5 sm:p-6 paper-shadow">
+      <h2 className="font-display text-lg mb-2 sm:mb-3">Job Description</h2>
+      <p className="text-sm text-brown mb-3 sm:mb-4">
         Paste the job posting to analyze and optimize your CV
       </p>
       
@@ -175,37 +175,37 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
           id="job-description" 
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="w-full h-64 p-4 font-mono text-sm typewriter-cursor" 
+          className="w-full h-64 sm:h-72 p-4 font-mono text-sm typewriter-cursor" 
           placeholder="Paste job description here..."
         />
         
         {/* Analysis progress display */}
         {isAnalyzing && analysisSteps.length > 0 && (
-          <div className="space-y-3 p-3 bg-cream/50 rounded">
+          <div className="space-y-3 p-3 sm:p-4 bg-cream/50 rounded">
             <div className="flex justify-between items-center mb-1">
               <h3 className="text-sm font-medium">Analysis Progress</h3>
               <span className="text-xs text-brown">{calculateProgress()}%</span>
             </div>
             
-            <div className="relative h-2 w-full bg-paper border border-brown/30 rounded-full overflow-hidden">
+            <div className="relative h-2.5 w-full bg-paper border border-brown/30 rounded-full overflow-hidden">
               <div 
                 className="absolute top-0 left-0 h-full bg-brown/40 transition-all duration-500 ease-in-out"
                 style={{ width: `${calculateProgress()}%` }}
               ></div>
             </div>
             
-            <div className="space-y-2 max-h-40 overflow-y-auto">
+            <div className="space-y-2 max-h-32 sm:max-h-40 overflow-y-auto mobile-scroll">
               {analysisSteps.map((step, index) => (
-                <div key={index} className="flex gap-2 items-center text-xs">
+                <div key={index} className="flex gap-2 items-center text-xs py-1">
                   {step.status === 'completed' ? (
-                    <Check className="h-3 w-3 text-green-600" />
+                    <Check className="h-3.5 w-3.5 sm:h-3 sm:w-3 text-green-600 flex-shrink-0" />
                   ) : step.status === 'in-progress' ? (
-                    <svg className="animate-spin h-3 w-3 text-brown" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin h-3.5 w-3.5 sm:h-3 sm:w-3 text-brown flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                   ) : (
-                    <Clock className="h-3 w-3 text-gray-400" />
+                    <Clock className="h-3.5 w-3.5 sm:h-3 sm:w-3 text-gray-400 flex-shrink-0" />
                   )}
                   <span className={step.status === 'completed' ? "text-black" : step.status === 'in-progress' ? "text-brown" : "text-gray-400"}>
                     {step.step}
@@ -219,11 +219,11 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
         <button
           onClick={handleAnalyze}
           disabled={isAnalyzing || value.length < 50}
-          className="font-mono text-md py-3 px-8 border border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center w-full"
+          className="font-mono text-md py-3.5 sm:py-3 px-8 border border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center w-full mobile-button touch-feedback"
         >
           {isAnalyzing ? (
             <>
-              <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-brown-dark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 sm:h-4 sm:w-4 text-brown-dark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>

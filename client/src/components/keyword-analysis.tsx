@@ -62,18 +62,18 @@ export function KeywordAnalysis({ analysis, optimization, showFull = false }: Ke
   if (showFull) {
     return (
       <div>
-        <h2 className="font-display text-lg mb-3">Keyword Analysis</h2>
-        <p className="text-sm text-brown mb-4">
+        <h2 className="font-display text-lg mb-2 sm:mb-3">Keyword Analysis</h2>
+        <p className="text-sm text-brown mb-3 sm:mb-4">
           {keywords.length} key terms identified through multi-step analysis
         </p>
 
-        // Full display shows a summary view with key metrics
-        <div className="space-y-6">
-          <div className="flex flex-wrap gap-2 mb-4">
+        {/* Full display shows a summary view with key metrics */}
+        <div className="space-y-5 sm:space-y-6">
+          <div className="flex flex-wrap gap-2 mb-3 sm:mb-4">
             {keywords.map((keyword, index) => (
               <span
                 key={index}
-                className="inline-block bg-paper py-1 px-3 rounded-full text-xs font-mono"
+                className="inline-block bg-paper py-1.5 sm:py-1 px-3 rounded-full text-xs font-mono"
               >
                 {keyword}
               </span>
@@ -82,14 +82,14 @@ export function KeywordAnalysis({ analysis, optimization, showFull = false }: Ke
           
           {optimization && (
             <div className="space-y-3">
-              <h3 className="font-mono text-sm border-b border-brown/20 pb-2 mb-3">
+              <h3 className="font-mono text-sm border-b border-brown/20 pb-2 mb-2 sm:mb-3">
                 Resume Match Score
               </h3>
-              <div className="flex items-center gap-3">
-                <div className="h-16 w-16 rounded-full bg-paper flex items-center justify-center border-4 border-green-100">
-                  <span className="text-lg font-bold">{optimization.matchRate}%</span>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-3">
+                <div className="h-20 sm:h-16 w-20 sm:w-16 rounded-full bg-paper flex items-center justify-center border-4 border-green-100 self-center sm:self-start">
+                  <span className="text-xl sm:text-lg font-bold">{optimization.matchRate}%</span>
                 </div>
-                <div className="space-y-2 flex-1">
+                <div className="space-y-3 sm:space-y-2 flex-1">
                   <div className="text-sm">
                     <div className="flex justify-between items-center mb-1">
                       <span className="font-mono text-xs">Present in your CV</span>
@@ -99,7 +99,7 @@ export function KeywordAnalysis({ analysis, optimization, showFull = false }: Ke
                     </div>
                     <Progress 
                       value={(optimization.matchingKeywords.length / keywords.length) * 100} 
-                      className="h-2 bg-cream overflow-hidden rounded" 
+                      className="h-2.5 sm:h-2 bg-cream overflow-hidden rounded" 
                     />
                   </div>
                   <div className="text-sm">
@@ -111,7 +111,7 @@ export function KeywordAnalysis({ analysis, optimization, showFull = false }: Ke
                     </div>
                     <Progress 
                       value={(optimization.missingKeywords.length / keywords.length) * 100} 
-                      className="h-2 bg-cream overflow-hidden rounded" 
+                      className="h-2.5 sm:h-2 bg-cream overflow-hidden rounded" 
                       indicatorClassName="bg-red-500"
                     />
                   </div>
@@ -126,18 +126,18 @@ export function KeywordAnalysis({ analysis, optimization, showFull = false }: Ke
   
   // Regular tabbed display (used in the analysis step)
   return (
-    <div className="bg-white rounded-lg p-6 paper-shadow">
-      <h2 className="font-display text-lg mb-3">Keyword Analysis</h2>
-      <p className="text-sm text-brown mb-4">
+    <div className="bg-white rounded-lg p-5 sm:p-6 paper-shadow">
+      <h2 className="font-display text-lg mb-2 sm:mb-3">Keyword Analysis</h2>
+      <p className="text-sm text-brown mb-3 sm:mb-4">
         {keywords.length} key terms identified through multi-step analysis
       </p>
         <Tabs defaultValue="keywords" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-5 mb-4">
-            <TabsTrigger value="keywords">Keywords</TabsTrigger>
-            <TabsTrigger value="research">Research</TabsTrigger>
-            <TabsTrigger value="ats">ATS Insights</TabsTrigger>
-            <TabsTrigger value="sources">Sources</TabsTrigger>
-            <TabsTrigger value="process">Process</TabsTrigger>
+          <TabsList className="flex overflow-x-auto pb-1 space-x-1 mb-4 mobile-scroll no-scrollbar sm:grid sm:grid-cols-5 sm:space-x-0">
+            <TabsTrigger value="keywords" className="flex-shrink-0">Keywords</TabsTrigger>
+            <TabsTrigger value="research" className="flex-shrink-0">Research</TabsTrigger>
+            <TabsTrigger value="ats" className="flex-shrink-0">ATS Insights</TabsTrigger>
+            <TabsTrigger value="sources" className="flex-shrink-0">Sources</TabsTrigger>
+            <TabsTrigger value="process" className="flex-shrink-0">Process</TabsTrigger>
           </TabsList>
         
         {/* Keywords Tab */}
