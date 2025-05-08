@@ -584,19 +584,63 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       console.log(`Found optimized CV - Content length: ${optimizedCV.content?.length || 0} characters`);
       
-      // Get the original CV if available
+      // Get the original CV and job description if available
       let cv = null;
+      let jobDescription = null;
       let contentToUse = optimizedCV.content || '';
       
       if (optimizedCV.cvId !== null) {
         cv = await storage.getCVDocument(optimizedCV.cvId);
         console.log(`Found original CV - ID: ${cv?.id}, Text length: ${cv?.extractedText?.length || 0} characters`);
-        
+      }
+      
+      if (optimizedCV.jobDescriptionId !== null) {
+        jobDescription = await storage.getJobDescription(optimizedCV.jobDescriptionId);
+      }
+      
+      if (useOriginal && cv && cv.extractedText) {
         // If useOriginal flag is true and we have the original text, use it instead
-        if (useOriginal && cv && cv.extractedText) {
-          contentToUse = `<div>${cv.extractedText.replace(/\n/g, '</p><p>')}</div>`;
-          console.log(`Using original CV content for export - Length: ${cv.extractedText.length} characters`);
-        }
+        contentToUse = `<div>${cv.extractedText.replace(/\n/g, '</p><p>')}</div>`;
+        console.log(`Using original CV content for export - Length: ${cv.extractedText.length} characters`);
+      } else if (cv && cv.extractedText && jobDescription && jobDescription.keywords) {
+        // For the optimized content, use the full original CV but with keyword highlighting
+        // This ensures we're exporting the complete CV content with optimizations
+        
+        // Convert the raw CV text to properly formatted HTML
+        const fullText = cv.extractedText;
+        const paragraphs = fullText.split('\n\n');
+        const htmlParts: string[] = [];
+        
+        // Get keywords
+        const keywords = jobDescription.keywords || [];
+        
+        // Process each paragraph
+        paragraphs.forEach((paragraph) => {
+          if (!paragraph.trim()) return;
+          
+          // Check if it might be a heading (short, ends with colon, or all caps)
+          if (paragraph.length < 50 || paragraph.endsWith(':') || paragraph === paragraph.toUpperCase()) {
+            htmlParts.push(`<h2 class="font-display text-lg border-b border-brown/30 pb-2 mb-3">${paragraph}</h2>`);
+          } else {
+            // For regular paragraphs, highlight any matching keywords
+            let highlightedParagraph = paragraph;
+            
+            // Sort keywords by length (longest first) to avoid partial replacements
+            const sortedKeywords = [...keywords].sort((a, b) => b.length - a.length);
+            
+            // Replace each keyword with a highlighted version
+            sortedKeywords.forEach(keyword => {
+              const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+              highlightedParagraph = highlightedParagraph.replace(regex, 
+                `<span class="bg-green-100 px-1">$&</span>`);
+            });
+            
+            htmlParts.push(`<p class="mb-4 text-sm">${highlightedParagraph}</p>`);
+          }
+        });
+        
+        contentToUse = htmlParts.join('');
+        console.log(`Using fully optimized CV content for export - Length: ${contentToUse.length} characters`);
       }
       
       // Make sure we have content to generate the export
