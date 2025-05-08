@@ -473,29 +473,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = analyzeJobDescriptionSchema.parse(req.body);
       const { jobDescription, cvId } = validatedData;
       
-      // Extract keywords from job description using OpenAI if API key available
-      let keywords: string[] = [];
+      // Use the multi-step analysis approach
+      let analysisResult: openaiService.JobAnalysisResult;
       try {
-        // Try to use OpenAI for more accurate keyword extraction
-        keywords = await openaiService.extractKeywords(jobDescription);
+        analysisResult = await openaiService.analyzeJobDescriptionMultiStep(jobDescription);
       } catch (aiError) {
-        console.warn('Using fallback keyword extraction:', aiError);
-        // Fallback to local extraction method
-        keywords = extractKeywords(jobDescription);
+        console.warn('Error in multi-step analysis, using fallback extraction:', aiError);
+        // Fallback to basic extraction
+        const keywords = extractKeywords(jobDescription);
+        analysisResult = {
+          keywords,
+          analysisSteps: [
+            { 
+              step: "Keyword Extraction", 
+              status: "completed", 
+              result: `Extracted ${keywords.length} keywords using fallback method.` 
+            }
+          ]
+        };
       }
       
-      // Store the job description
+      // Store the job description with all the analysis data
       const jobDescriptionData = await storage.createJobDescription({
         content: jobDescription,
-        keywords,
+        keywords: analysisResult.keywords,
+        roleResearch: analysisResult.roleResearch,
+        industryKeywords: analysisResult.industryKeywords,
+        recruitmentInsights: analysisResult.recruitmentInsights,
+        atsFindings: analysisResult.atsFindings,
         cvId: cvId || null,
         userId: null // Anonymous for now
       });
       
       res.status(200).json({
         id: jobDescriptionData.id,
-        keywords,
-        content: jobDescription
+        keywords: analysisResult.keywords,
+        content: jobDescription,
+        roleResearch: analysisResult.roleResearch,
+        industryKeywords: analysisResult.industryKeywords,
+        recruitmentInsights: analysisResult.recruitmentInsights,
+        atsFindings: analysisResult.atsFindings,
+        analysisSteps: analysisResult.analysisSteps
       });
     } catch (error) {
       console.error('Error analyzing job description:', error);
