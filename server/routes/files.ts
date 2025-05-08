@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import multer from 'multer';
 import { getFile, saveFile } from '../file-storage';
 import { extractTextFromPDF } from './utils';
@@ -12,8 +12,20 @@ const upload = multer({
   limits: { fileSize: 20 * 1024 * 1024 } // 20MB limit
 });
 
+// Extend the Request type for multer
+interface MulterRequest extends Request {
+  file?: {
+    fieldname: string;
+    originalname: string;
+    encoding: string;
+    mimetype: string;
+    size: number;
+    buffer: Buffer;
+  };
+}
+
 // Route to upload a CV document
-router.post('/upload', upload.single('file'), async (req, res) => {
+router.post('/upload', upload.single('file'), async (req: MulterRequest, res: Response) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -55,7 +67,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 });
 
 // Route to get a stored file
-router.get('/:filename', async (req, res) => {
+router.get('/:filename', async (req: Request, res: Response) => {
   try {
     const { filename } = req.params;
     const file = await getFile(filename);

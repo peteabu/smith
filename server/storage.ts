@@ -55,7 +55,8 @@ export class DatabaseStorage implements IStorage {
       .insert(cvDocuments)
       .values({
         fileName: document.fileName,
-        fileContent: document.fileUrl || document.fileContent, // Store URL instead of content when possible
+        fileContent: document.fileContent || null,
+        fileUrl: document.fileUrl || null,
         fileType: document.fileType,
         extractedText: document.extractedText || null,
         userId: document.userId || null,

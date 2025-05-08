@@ -217,6 +217,9 @@ function optimizeCV(cvText: string, keywords: string[]): {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Register the files router
+  app.use('/api/files', filesRouter);
+  
   // API Routes
   app.post('/api/cv/upload', async (req: Request, res: Response) => {
     try {

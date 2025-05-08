@@ -62,11 +62,21 @@ export async function uploadCV(
   fileContent: string
 ): Promise<{ id: number; fileName: string }> {
   try {
-    const response = await apiRequest('POST', '/api/cv/upload', {
-      fileName: file.name,
-      fileContent,
-      fileType: file.type
+    // Create a FormData object to send the file
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // Use FormData for the new endpoint
+    const response = await fetch('/api/files/upload', {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
     });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to upload CV: ${response.statusText}`);
+    }
+    
     return await response.json();
   } catch (error) {
     console.error('Failed to upload CV:', error);
