@@ -106,13 +106,13 @@ export default function Home() {
         <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Playfair+Display:wght@400;700&family=Source+Serif+Pro:wght@400;600&display=swap" rel="stylesheet" />
       </Helmet>
       
-      <div className="bg-cream min-h-screen font-serif text-moss-dark">
-        <header className="py-6 px-4 text-center">
-          <h1 className="font-display text-3xl md:text-4xl text-brown-dark tracking-wide">CV Optimizer</h1>
-          <p className="font-mono text-sm mt-2 text-brown opacity-80">ATS-friendly resume tailoring</p>
+      <div className="bg-cream min-h-screen font-serif text-moss-dark mobile-safe-area">
+        <header className="py-4 sm:py-6 px-4 text-center sticky top-0 z-30 bg-cream border-b border-brown/20">
+          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl text-brown-dark tracking-wide">CV Optimizer</h1>
+          <p className="font-mono text-xs sm:text-sm mt-1 sm:mt-2 text-brown opacity-80">ATS-friendly resume tailoring</p>
         </header>
         
-        <main className="container mx-auto px-4 pb-12 max-w-6xl">
+        <main className="container mx-auto px-3 sm:px-4 pb-8 safe-bottom max-w-6xl overflow-x-hidden">
           {/* Workflow Progress Indicator */}
           <div className="mb-8">
             <div className="flex justify-between items-center mb-3">
