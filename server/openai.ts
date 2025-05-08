@@ -444,24 +444,27 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
         {
           role: "system",
           content: 
-            "You are an ATS expert who synthesizes all aspects of job analysis to extract the most high-value keywords. " +
-            "Based on all previous analysis steps and web research, extract 15-20 important keywords, prioritizing:\n" +
-            "1. Hard skills and technical competencies\n" +
-            "2. Domain-specific knowledge areas\n" +
-            "3. Software/tools/platforms mentioned\n" +
-            "4. Certifications or qualifications\n" +
-            "5. Industry-specific terminology\n\n" +
+            "You are an ATS expert who specializes in identifying crucial keywords to pass Applicant Tracking Systems. " +
+            "Your task is to analyze a job description and identify the MOST IMPORTANT keywords that a candidate's resume must contain to pass the ATS screening. " +
+            "First, closely analyze the job description to identify what the employer is specifically looking for. " +
+            "Then use the research data and web search results to enhance your understanding of key terms in this industry and role. " +
+            "Extract 15-20 high-priority keywords that are DIRECTLY MENTIONED in the job description or highly correlated to requirements in the job description based on research, prioritizing:\n\n" +
+            "1. Hard skills and technical competencies explicitly mentioned in the job description\n" +
+            "2. Domain-specific knowledge areas required for the role\n" +
+            "3. Software/tools/platforms the candidate must be proficient in\n" +
+            "4. Required certifications or qualifications\n" +
+            "5. Industry-specific terminology that demonstrates domain expertise\n\n" +
             "FORMATTING RULES:\n" +
-            "- Extract standalone keywords and key phrases only (typically 1-3 words)\n" +
+            "- Extract standalone keywords and key phrases (typically 1-3 words)\n" +
+            "- Focus on terms that appear directly in the job description or are strongly implied\n" +
             "- Maintain original capitalization for proper nouns, acronyms and product names\n" +
-            "- Exclude generic soft skills unless heavily emphasized\n" +
-            "- Sort by priority (most important first)\n" +
+            "- Sort by priority and relevance to THIS SPECIFIC job description (most important first)\n" +
             "- Return as a JSON object with a 'keywords' array\n" +
             "- Format: { \"keywords\": [\"keyword1\", \"keyword2\", ...] }"
         },
         {
           role: "user",
-          content: `Job Description: ${jobDescription.substring(0, 300)}...\n\nRole Research: ${roleResearch.substring(0, 200)}...\n\nIndustry Keywords: ${result.industryKeywords?.join(', ')}\n\nATS Findings: ${atsFindings.substring(0, 200)}...\n\nWeb Insights: ${webInsights}\n\nExtract the most valuable keywords for resume optimization.`
+          content: `JOB DESCRIPTION (ANALYZE THIS CAREFULLY):\n${jobDescription}\n\nRole Research: ${roleResearch}\n\nIndustry Keywords: ${result.industryKeywords?.join(', ')}\n\nATS Findings: ${atsFindings}\n\nWeb Search Insights:\n${webInsights}\n\nExtract the most valuable keywords for resume optimization that are directly relevant to THIS SPECIFIC job description.`
         }
       ],
       response_format: { type: "json_object" }
@@ -546,9 +549,9 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
       };
     }
 
-    // Find which keywords are present in the CV
+    // Find which keywords are present in the original CV
     const cvLower = originalCV.toLowerCase();
-    const matchingKeywords: string[] = [];
+    const originalMatchingKeywords: string[] = [];
     const missingKeywords: string[] = [];
     
     // Handle null keywords
@@ -556,21 +559,71 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
     
     keywordsArray.forEach(keyword => {
       if (cvLower.includes(keyword.toLowerCase())) {
-        matchingKeywords.push(keyword);
+        originalMatchingKeywords.push(keyword);
       } else {
         missingKeywords.push(keyword);
       }
     });
     
-    // Calculate match rate
+    // Calculate original match rate
+    const originalMatchRate = keywordsArray.length > 0 
+      ? Math.round((originalMatchingKeywords.length / keywordsArray.length) * 100)
+      : 0;
+
+    // Use OpenAI to optimize the resume content with missing keywords
+    const optimizationResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: 
+            "You are an expert resume editor whose goal is to optimize resumes to pass ATS systems by incorporating relevant keywords without fabricating experiences. " +
+            "Analyze the resume and enhance it by incorporating missing keywords in a natural, honest way. " +
+            "\n\nFOLLOW THESE RULES PRECISELY:" +
+            "\n1. DO NOT invent or fabricate work experiences, education, or skills not mentioned in the original resume" +
+            "\n2. DO rewrite bullet points to naturally incorporate the keywords missing from the resume" +
+            "\n3. DO add industry-standard skills sections if missing from the resume, but only include skills that seem reasonable based on the experience shown" +
+            "\n4. DO maintain the resume's original structure (sections, ordering)" +
+            "\n5. DO improve phrasing to use active voice and quantifiable achievements" +
+            "\n6. DO NOT add fictional jobs, education, or certifications" +
+            "\n7. DO focus primarily on incorporating the missing keywords by enhancing existing content" +
+            "\n8. DO preserve all original experience details even if rephrased" +
+            "\n\nYour task is to return the optimized resume text content that naturally incorporates more of the target keywords."
+        },
+        {
+          role: "user",
+          content: `ORIGINAL RESUME:\n\n${originalCV}\n\nKEYWORDS TO INCORPORATE (${missingKeywords.length} missing):\n${missingKeywords.join(', ')}\n\nPlease optimize this resume to naturally include more of these keywords while maintaining honesty and the resume's overall structure. Target a keyword match rate of at least 70%.`
+        }
+      ]
+    });
+
+    const optimizedText = optimizationResponse.choices[0].message.content || originalCV;
+
+    // Calculate how many keywords are now present in the optimized version
+    const optimizedTextLower = optimizedText.toLowerCase();
+    const matchingKeywords: string[] = [];
+    const stillMissingKeywords: string[] = [];
+    
+    keywordsArray.forEach(keyword => {
+      if (optimizedTextLower.includes(keyword.toLowerCase())) {
+        matchingKeywords.push(keyword);
+      } else {
+        stillMissingKeywords.push(keyword);
+      }
+    });
+    
+    // Calculate new match rate
     const matchRate = keywordsArray.length > 0 
       ? Math.round((matchingKeywords.length / keywordsArray.length) * 100)
       : 0;
-
-    // Convert the resume text to HTML with minimal formatting
+    
+    // Show what was improved
+    console.log(`Keyword match improvement: ${originalMatchRate}% → ${matchRate}% (+${matchRate - originalMatchRate}%)`);
+    
+    // Convert the optimized resume text to HTML with formatting
     // First, split the resume into meaningful sections
     const htmlParts: string[] = [];
-    const lines = originalCV.split('\n');
+    const lines = optimizedText.split('\n');
     
     let currentParagraph: string[] = [];
     let currentList: string[] = [];
@@ -640,7 +693,7 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
       }
       
       // Check if it's a list item (starts with bullet or dash)
-      if (line.startsWith('•') || line.startsWith('-')) {
+      if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
         // If we have a paragraph in progress, add it first
         addParagraph();
         currentList.push(line);
@@ -667,13 +720,28 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
       formattedHtml = formattedHtml.replace(regex, '<span class="bg-green-100 px-1">$1</span>');
     });
     
+    // Add a summary of the optimization at the top
+    const summaryHtml = `
+      <div class="mb-6 p-4 bg-blue-50 rounded border border-blue-200">
+        <h2 class="text-lg font-semibold mb-2">Resume Optimization Summary</h2>
+        <p class="mb-2">Your resume was optimized to increase keyword matching from <strong>${originalMatchRate}%</strong> to <strong>${matchRate}%</strong>.</p>
+        <p class="mb-1">Added keywords:</p>
+        <div class="flex flex-wrap gap-1 mb-3">
+          ${matchingKeywords.filter(k => !originalMatchingKeywords.includes(k)).map(k => 
+            `<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">${k}</span>`
+          ).join('')}
+        </div>
+        <p class="text-xs text-gray-600">Changes have been made while maintaining the integrity of your experience.</p>
+      </div>
+    `;
+    
     // Now wrap everything in a container
-    const optimizedContent = `<div class="resume-content">${formattedHtml}</div>`;
+    const optimizedContent = `<div class="resume-content">${summaryHtml}${formattedHtml}</div>`;
 
     return {
       optimizedContent,
       matchingKeywords,
-      missingKeywords,
+      missingKeywords: stillMissingKeywords,
       matchRate
     };
   } catch (error) {
@@ -712,9 +780,9 @@ function fallbackOptimization(originalCV: string, keywords: string[] | null): {
   missingKeywords: string[];
   matchRate: number;
 } {
-  // Find which keywords are present in the CV
+  // Find which keywords are present in the original CV
   const cvLower = originalCV.toLowerCase();
-  const matchingKeywords: string[] = [];
+  const originalMatchingKeywords: string[] = [];
   const missingKeywords: string[] = [];
   
   // Handle null keywords
@@ -722,37 +790,107 @@ function fallbackOptimization(originalCV: string, keywords: string[] | null): {
   
   keywordsArray.forEach(keyword => {
     if (cvLower.includes(keyword.toLowerCase())) {
-      matchingKeywords.push(keyword);
+      originalMatchingKeywords.push(keyword);
     } else {
       missingKeywords.push(keyword);
     }
   });
   
-  // Calculate match rate
+  // Calculate original match rate
+  const originalMatchRate = keywordsArray.length > 0 
+    ? Math.round((originalMatchingKeywords.length / keywordsArray.length) * 100)
+    : 0;
+  
+  // Simple optimization: attempt to add missing keywords in a skills section
+  let optimizedText = originalCV;
+  
+  // Check if there's a Skills section already
+  const hasSkillsSection = /\bskills\b|\bcompetencies\b|\bcapabilities\b/i.test(originalCV);
+  
+  if (!hasSkillsSection && missingKeywords.length > 0) {
+    // Add a Skills section with the missing keywords
+    optimizedText += '\n\nSKILLS\n';
+    optimizedText += missingKeywords.join(', ');
+  } else if (hasSkillsSection && missingKeywords.length > 0) {
+    // Try to enhance existing skills section
+    const lines = optimizedText.split('\n');
+    let foundSkillsSection = false;
+    
+    for (let i = 0; i < lines.length; i++) {
+      if (/\bskills\b|\bcompetencies\b|\bcapabilities\b/i.test(lines[i]) && !foundSkillsSection) {
+        foundSkillsSection = true;
+        // Skip to the content line (usually next line)
+        if (i + 1 < lines.length) {
+          lines[i + 1] = lines[i + 1] + ', ' + missingKeywords.join(', ');
+        }
+      }
+    }
+    
+    optimizedText = lines.join('\n');
+  }
+  
+  // Calculate how many keywords are now present in the optimized version
+  const optimizedTextLower = optimizedText.toLowerCase();
+  const matchingKeywords: string[] = [];
+  const stillMissingKeywords: string[] = [];
+  
+  keywordsArray.forEach(keyword => {
+    if (optimizedTextLower.includes(keyword.toLowerCase())) {
+      matchingKeywords.push(keyword);
+    } else {
+      stillMissingKeywords.push(keyword);
+    }
+  });
+  
+  // Calculate new match rate
   const matchRate = keywordsArray.length > 0 
     ? Math.round((matchingKeywords.length / keywordsArray.length) * 100)
     : 0;
   
-  // Generate HTML content from original CV
-  const paragraphs = originalCV.split('\n\n');
-  let optimizedContent = '';
+  // Generate HTML content from optimized CV
+  const paragraphs = optimizedText.split('\n\n');
+  let formattedHtml = '';
   
   // Create a simple HTML representation of the CV
   paragraphs.forEach(paragraph => {
     if (paragraph.trim()) {
       // Check if it might be a heading (short, ends with colon, or all caps)
       if (paragraph.length < 30 || paragraph.endsWith(':') || paragraph === paragraph.toUpperCase()) {
-        optimizedContent += `<h3 class="font-display text-lg border-b border-brown/30 pb-2 mb-3">${paragraph}</h3>`;
+        formattedHtml += `<h3 class="font-display text-lg border-b border-brown/30 pb-2 mb-3">${paragraph}</h3>`;
       } else {
-        optimizedContent += `<p class="mb-4 text-sm">${paragraph}</p>`;
+        formattedHtml += `<p class="mb-4 text-sm">${paragraph}</p>`;
       }
     }
   });
   
+  // Highlight matching keywords in the HTML
+  keywordsArray.forEach(keyword => {
+    // Create a case-insensitive regular expression
+    const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+    formattedHtml = formattedHtml.replace(regex, match => `<span class="bg-green-100 px-1">${match}</span>`);
+  });
+  
+  // Add a summary of the optimization at the top
+  const summaryHtml = `
+    <div class="mb-6 p-4 bg-blue-50 rounded border border-blue-200">
+      <h2 class="text-lg font-semibold mb-2">Resume Optimization Summary</h2>
+      <p class="mb-2">Your resume was optimized to increase keyword matching from <strong>${originalMatchRate}%</strong> to <strong>${matchRate}%</strong>.</p>
+      <p class="mb-1">Added keywords:</p>
+      <div class="flex flex-wrap gap-1 mb-3">
+        ${matchingKeywords.filter(k => !originalMatchingKeywords.includes(k)).map(k => 
+          `<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">${k}</span>`
+        ).join('')}
+      </div>
+      <p class="text-xs text-gray-600">Note: This is a simple optimization. For better results, please provide an OpenAI API key.</p>
+    </div>
+  `;
+  
+  const optimizedContent = `<div class="resume-content">${summaryHtml}${formattedHtml}</div>`;
+  
   return {
     optimizedContent,
     matchingKeywords,
-    missingKeywords,
+    missingKeywords: stillMissingKeywords,
     matchRate
   };
 }
