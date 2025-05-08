@@ -184,12 +184,12 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
 // Local keyword extraction as fallback
 function extractKeywordsLocally(text: string): string[] {
   const words = text.toLowerCase().split(/\W+/);
-  const stopWords = new Set(['a', 'an', 'the', 'and', 'or', 'but', 'is', 'are', 'in', 'to', 'for', 'of', 'with', 'on', 'at']);
+  const stopWordsList = ['a', 'an', 'the', 'and', 'or', 'but', 'is', 'are', 'in', 'to', 'for', 'of', 'with', 'on', 'at'];
   
   // Count word frequencies
   const wordCounts = new Map<string, number>();
   words.forEach(word => {
-    if (word.length > 2 && !stopWords.has(word)) {
+    if (word.length > 2 && !stopWordsList.includes(word)) {
       wordCounts.set(word, (wordCounts.get(word) || 0) + 1);
     }
   });

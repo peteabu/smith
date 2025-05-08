@@ -63,51 +63,134 @@ function extractKeywords(text: string): string[] {
 
 // Helper function to create a PDF from HTML content
 function createPDF(content: string, format: 'pdf' | 'latex' = 'pdf'): Buffer {
+  // Process the HTML content to extract structured information
+  const headings: string[] = [];
+  const paragraphs: string[] = [];
+  const listItems: string[] = [];
+  
+  // Extract headings
+  const headingRegex = /<h[1-6][^>]*>(.*?)<\/h[1-6]>/gi;
+  let headingMatch;
+  while ((headingMatch = headingRegex.exec(content)) !== null) {
+    const heading = headingMatch[1].replace(/<[^>]*>/g, '').trim();
+    if (heading) headings.push(heading);
+  }
+  
+  // Extract paragraphs
+  const paragraphRegex = /<p[^>]*>(.*?)<\/p>/gis;
+  let paragraphMatch;
+  while ((paragraphMatch = paragraphRegex.exec(content)) !== null) {
+    let paragraph = paragraphMatch[1]
+      .replace(/<span class="bg-green-100 px-1">(.*?)<\/span>/gi, '$1')
+      .replace(/<span class="font-semibold">(.*?)<\/span>/gi, '$1')
+      .replace(/<[^>]*>/g, '')
+      .trim();
+    
+    if (paragraph) paragraphs.push(paragraph);
+  }
+  
+  // Extract list items
+  const listItemRegex = /<li[^>]*>(.*?)<\/li>/gis;
+  let listItemMatch;
+  while ((listItemMatch = listItemRegex.exec(content)) !== null) {
+    let listItem = listItemMatch[1]
+      .replace(/<span class="bg-green-100 px-1">(.*?)<\/span>/gi, '$1')
+      .replace(/<span class="font-semibold">(.*?)<\/span>/gi, '$1')
+      .replace(/<[^>]*>/g, '')
+      .trim();
+    
+    if (listItem) listItems.push(listItem);
+  }
+  
+  // If no structured content was found, fall back to plain text
+  if (headings.length === 0 && paragraphs.length === 0 && listItems.length === 0) {
+    const plainText = content
+      .replace(/<[^>]*>/g, '') // Remove all HTML tags
+      .replace(/&nbsp;/g, ' ') // Replace HTML entities
+      .trim();
+      
+    if (plainText) {
+      paragraphs.push(plainText);
+    }
+  }
+  
   if (format === 'latex') {
-    // This is a simplified version - in a real app, you'd use a LaTeX library
-    // Here we're just styling the PDF differently to simulate LaTeX
-    const doc = new PDFDocument({ margin: 50 });
+    // LaTeX-style PDF
+    const doc = new PDFDocument({ 
+      margin: 50,
+      size: 'A4'
+    });
     const buffers: Buffer[] = [];
     
     doc.on('data', (chunk) => buffers.push(chunk));
     doc.on('end', () => {});
     
-    // Add a LaTeX-like styling
-    doc.font('Helvetica');
-    doc.fontSize(18).text('LaTeX-Style CV', { align: 'center' });
-    doc.moveDown();
+    // Add a professional header
+    doc.font('Helvetica-Bold').fontSize(16).text('Optimized Resume', { align: 'center' });
+    doc.moveDown(1);
     
-    // Parse the HTML content and add to PDF (simplified)
-    // In a real implementation, you'd use a proper HTML-to-PDF library
-    const cleanContent = content
-      .replace(/<[^>]*>/g, '') // Remove HTML tags
-      .replace(/&nbsp;/g, ' '); // Replace HTML entities
+    // Add sections with proper formatting
+    headings.forEach((heading, index) => {
+      if (index > 0) doc.moveDown(1);
+      doc.font('Helvetica-Bold').fontSize(14).text(heading);
+      doc.moveDown(0.5);
+    });
     
-    doc.fontSize(12).text(cleanContent, { align: 'left' });
+    // Add paragraphs
+    paragraphs.forEach(paragraph => {
+      doc.font('Helvetica').fontSize(11).text(paragraph, { align: 'left' });
+      doc.moveDown(1);
+    });
+    
+    // Add list items
+    listItems.forEach(item => {
+      doc.font('Helvetica').fontSize(11).text(`• ${item}`, { align: 'left' });
+      doc.moveDown(0.5);
+    });
     
     doc.end();
-    
-    // Concatenate all chunks into a single buffer
     return Buffer.concat(buffers);
   } else {
     // Standard PDF
-    const doc = new PDFDocument();
+    const doc = new PDFDocument({ 
+      margin: 50, 
+      size: 'A4'
+    });
     const buffers: Buffer[] = [];
     
     doc.on('data', (chunk) => buffers.push(chunk));
     doc.on('end', () => {});
     
-    // Parse the HTML content and add to PDF (simplified)
-    // In a real implementation, you'd use a proper HTML-to-PDF library
-    const cleanContent = content
-      .replace(/<[^>]*>/g, '') // Remove HTML tags
-      .replace(/&nbsp;/g, ' '); // Replace HTML entities
+    // Title
+    doc.font('Helvetica-Bold').fontSize(16).text('Optimized Resume', { align: 'center' });
+    doc.moveDown(1);
     
-    doc.fontSize(12).text(cleanContent);
+    // Add headings and content with nice formatting
+    let currentSection = '';
+    
+    headings.forEach((heading, index) => {
+      currentSection = heading;
+      doc.font('Helvetica-Bold').fontSize(13).text(heading);
+      doc.moveDown(0.5);
+      
+      // Draw a simple line instead of using moveTo/lineTo
+      doc.fontSize(1).text('_'.repeat(80), { align: 'center' });
+      doc.moveDown(0.5);
+    });
+    
+    // Add paragraphs
+    paragraphs.forEach(paragraph => {
+      doc.font('Helvetica').fontSize(11).text(paragraph, { align: 'left' });
+      doc.moveDown(0.5);
+    });
+    
+    // Add list items
+    listItems.forEach(item => {
+      doc.font('Helvetica').fontSize(11).text(`   • ${item}`);
+      doc.moveDown(0.5);
+    });
     
     doc.end();
-    
-    // Concatenate all chunks into a single buffer
     return Buffer.concat(buffers);
   }
 }
