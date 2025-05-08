@@ -4,18 +4,89 @@ import { analyzeJobDescription } from "@/lib/cv-analyzer";
 import { useToast } from "@/hooks/use-toast";
 import { KeywordAnalysisResult } from "@/lib/cv-analyzer";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Search, Check, Clock } from "lucide-react";
+import { io } from "socket.io-client";
+import { Progress } from "@/components/ui/progress";
 
 interface JobDescriptionProps {
   cvId: number | null;
   onAnalysisComplete: (result: KeywordAnalysisResult) => void;
 }
 
+interface AnalysisStep {
+  step: string;
+  status: 'completed' | 'in-progress' | 'pending';
+  result?: string;
+  sources?: string[];
+}
+
+interface AnalysisProgress {
+  analysisId: string;
+  step: AnalysisStep;
+}
+
 export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps) {
   const [value, setValue] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisSteps, setAnalysisSteps] = useState<AnalysisStep[]>([]);
+  const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
   const { toast } = useToast();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const socketRef = useRef<any>(null);
+  
+  // Initialize Socket.IO connection
+  useEffect(() => {
+    // Create a socket connection
+    socketRef.current = io();
+    
+    // Listen for analysis progress events
+    socketRef.current.on('analysis-progress', (data: AnalysisProgress) => {
+      console.log('Received analysis progress:', data);
+      
+      // If this is for our current analysis
+      if (currentAnalysisId === data.analysisId || !currentAnalysisId) {
+        // Save the analysis ID if we don't have it yet
+        if (!currentAnalysisId) {
+          setCurrentAnalysisId(data.analysisId);
+        }
+        
+        setAnalysisSteps(prevSteps => {
+          // Find if we already have this step
+          const stepIndex = prevSteps.findIndex(s => s.step === data.step.step);
+          
+          if (stepIndex >= 0) {
+            // Update existing step
+            const newSteps = [...prevSteps];
+            newSteps[stepIndex] = data.step;
+            return newSteps;
+          } else {
+            // Add new step
+            return [...prevSteps, data.step];
+          }
+        });
+      }
+    });
+    
+    // Listen for analysis completion
+    socketRef.current.on('analysis-completed', (data: any) => {
+      console.log('Analysis completed:', data);
+      
+      // If this is our current analysis
+      if (currentAnalysisId === data.analysisId) {
+        // Analysis is complete, update all steps to completed
+        setAnalysisSteps(prevSteps => 
+          prevSteps.map(step => ({...step, status: 'completed'}))
+        );
+      }
+    });
+    
+    // Clean up on unmount
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, [currentAnalysisId]);
   
   // Clear any pending analysis when unmounting
   useEffect(() => {
@@ -68,6 +139,30 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
     }
   }, [value, cvId, isAnalyzing, onAnalysisComplete, toast]);
   
+  // Calculate overall progress percentage
+  const calculateProgress = () => {
+    if (!analysisSteps.length) return 0;
+    
+    const completedSteps = analysisSteps.filter(step => step.status === 'completed').length;
+    const inProgressSteps = analysisSteps.filter(step => step.status === 'in-progress').length;
+    
+    // Count in-progress steps as half complete
+    return Math.floor((completedSteps + (inProgressSteps * 0.5)) / analysisSteps.length * 100);
+  };
+  
+  // Reset analysis state
+  const handleReset = () => {
+    setAnalysisSteps([]);
+    setCurrentAnalysisId(null);
+  };
+  
+  useEffect(() => {
+    // Reset analysis steps when starting a new analysis
+    if (isAnalyzing && analysisSteps.length) {
+      handleReset();
+    }
+  }, [isAnalyzing]);
+  
   return (
     <div className="bg-white rounded-lg p-6 paper-shadow">
       <h2 className="font-display text-lg mb-3">Job Description</h2>
@@ -83,6 +178,38 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
           className="w-full h-64 p-4 bg-cream font-mono text-sm border border-brown/30 rounded focus:ring-1 focus:ring-brown focus:outline-none typewriter-cursor" 
           placeholder="Paste job description here..."
         />
+        
+        {/* Analysis progress display */}
+        {isAnalyzing && analysisSteps.length > 0 && (
+          <div className="space-y-3 p-3 bg-cream/50 rounded">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="text-sm font-medium">Analysis Progress</h3>
+              <span className="text-xs text-brown">{calculateProgress()}%</span>
+            </div>
+            
+            <Progress value={calculateProgress()} className="h-1 bg-cream" />
+            
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {analysisSteps.map((step, index) => (
+                <div key={index} className="flex gap-2 items-center text-xs">
+                  {step.status === 'completed' ? (
+                    <Check className="h-3 w-3 text-green-600" />
+                  ) : step.status === 'in-progress' ? (
+                    <svg className="animate-spin h-3 w-3 text-brown" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : (
+                    <Clock className="h-3 w-3 text-gray-400" />
+                  )}
+                  <span className={step.status === 'completed' ? "text-black" : step.status === 'in-progress' ? "text-brown" : "text-gray-400"}>
+                    {step.step}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         
         <Button 
           onClick={handleAnalyze}

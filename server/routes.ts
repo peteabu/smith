@@ -243,6 +243,32 @@ function optimizeCV(cvText: string, keywords: string[]): {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Create HTTP server
+  const server = createServer(app);
+  
+  // Initialize Socket.IO
+  const io = new SocketIOServer(server, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    }
+  });
+  
+  // Set up socket connection
+  io.on('connection', (socket) => {
+    console.log('Client connected:', socket.id);
+    
+    socket.on('disconnect', () => {
+      console.log('Client disconnected:', socket.id);
+    });
+  });
+  
+  // Socket.IO middleware to pass the io instance to req
+  app.use((req: any, _res: Response, next: NextFunction) => {
+    req.io = io;
+    next();
+  });
+  
   // Register the files router
   app.use('/api/files', filesRouter);
   
@@ -349,7 +375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post('/api/analyze', async (req: Request, res: Response) => {
+  app.post('/api/analyze', async (req: any, res: Response) => {
     try {
       const validatedData = analyzeJobDescriptionSchema.parse(req.body);
       const { jobDescription, cvId } = validatedData;
@@ -362,6 +388,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         console.log("OPENAI_API_KEY is set and available for use");
       }
+      
+      // Create a unique analysis ID for this session (client can subscribe to this)
+      const analysisId = Date.now().toString();
+      
+      // Set up event listeners for step updates
+      const progressHandler = (step: {
+        step: string;
+        status: 'completed' | 'in-progress' | 'pending';
+        result?: string;
+        sources?: string[];
+      }) => {
+        try {
+          // Emit events to all clients
+          req.io.emit('analysis-progress', { 
+            analysisId, 
+            step 
+          });
+          
+          // Log progress to console as well
+          console.log(`Analysis step: "${step.step}" - Status: ${step.status}`);
+        } catch (err) {
+          console.error('Error emitting progress event:', err);
+        }
+      };
+      
+      // Assign the observer
+      openaiService.setAnalysisProgressObserver(progressHandler);
       
       // Use the multi-step analysis approach
       let analysisResult: openaiService.JobAnalysisResult;
@@ -396,6 +449,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         webSearchResults: analysisResult.webSearchResults,
         cvId: cvId || null,
         userId: null // Anonymous for now
+      });
+      
+      // Clear the observer to avoid memory leaks
+      openaiService.clearAnalysisProgressObserver();
+      
+      // Emit a final completed event
+      req.io.emit('analysis-completed', {
+        analysisId,
+        result: {
+          id: jobDescriptionData.id,
+          keywords: analysisResult.keywords,
+          content: jobDescription,
+          roleResearch: analysisResult.roleResearch,
+          industryKeywords: analysisResult.industryKeywords,
+          recruitmentInsights: analysisResult.recruitmentInsights,
+          atsFindings: analysisResult.atsFindings,
+          webSearchResults: analysisResult.webSearchResults,
+          analysisSteps: analysisResult.analysisSteps
+        }
       });
       
       res.status(200).json({

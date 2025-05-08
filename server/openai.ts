@@ -4,6 +4,38 @@ import OpenAI from "openai";
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// Observer pattern for progress updates
+type ProgressObserver = (step: {
+  step: string;
+  status: 'completed' | 'in-progress' | 'pending';
+  result?: string;
+  sources?: string[];
+}) => void;
+
+let analysisProgressObserver: ProgressObserver | null = null;
+
+// Set the observer function for receiving step updates
+export function setAnalysisProgressObserver(observer: ProgressObserver) {
+  analysisProgressObserver = observer;
+}
+
+// Clear the observer function
+export function clearAnalysisProgressObserver() {
+  analysisProgressObserver = null;
+}
+
+// Notify observer about step changes
+function notifyProgressUpdate(step: {
+  step: string;
+  status: 'completed' | 'in-progress' | 'pending';
+  result?: string;
+  sources?: string[];
+}) {
+  if (analysisProgressObserver) {
+    analysisProgressObserver(step);
+  }
+}
+
 // Interface for web search results
 interface WebSearchResult {
   title?: string;
@@ -150,6 +182,7 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
   try {
     // Step 1: Initial Text Analysis
     result.analysisSteps![0].status = "in-progress";
+    notifyProgressUpdate(result.analysisSteps![0]);
     
     const initialAnalysisResponse = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -175,6 +208,7 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
     const initialAnalysis = initialAnalysisResponse.choices[0].message.content || "";
     result.analysisSteps![0].status = "completed";
     result.analysisSteps![0].result = initialAnalysis;
+    notifyProgressUpdate(result.analysisSteps![0]);
     
     // Extract job title and industry from initial analysis for web searches
     let jobTitle = "";
