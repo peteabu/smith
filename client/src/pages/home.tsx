@@ -199,51 +199,41 @@ export default function Home() {
             
             {/* Step 1: Upload CV */}
             <TabsContent value={WorkflowStep.UPLOAD_CV} className="space-y-6 mt-0">
-              <div className="bg-white rounded-lg p-6 paper-shadow">
-                <FileUpload onCvUploaded={handleCvUploaded} />
-              </div>
+              <FileUpload onCvUploaded={handleCvUploaded} />
             </TabsContent>
             
             {/* Step 2: Job Description Analysis */}
             <TabsContent value={WorkflowStep.ANALYZE_JOB} className="space-y-6 mt-0">
-              <div className="bg-white rounded-lg p-6 paper-shadow">
-                <JobDescription 
-                  cvId={cvId} 
-                  onAnalysisComplete={handleAnalysisComplete} 
-                />
-              </div>
+              <JobDescription 
+                cvId={cvId} 
+                onAnalysisComplete={handleAnalysisComplete} 
+              />
             </TabsContent>
             
             {/* Step 3: Keyword Analysis and Optimization */}
             <TabsContent value={WorkflowStep.OPTIMIZE} className="space-y-6 mt-0">
-              <div className="bg-white rounded-lg p-6 paper-shadow">
-                <KeywordAnalysis 
-                  analysis={jobAnalysis} 
-                  optimization={optimizedCV} 
+              <KeywordAnalysis 
+                analysis={jobAnalysis} 
+                optimization={optimizedCV} 
+              />
+              <div className="mt-6">
+                <OptimizeButton 
+                  disabled={!cvId || !jobAnalysis?.id} 
+                  isProcessing={isProcessing}
+                  onClick={handleOptimizeCv}
                 />
-                <div className="mt-6">
-                  <OptimizeButton 
-                    disabled={!cvId || !jobAnalysis?.id} 
-                    isProcessing={isProcessing}
-                    onClick={handleOptimizeCv}
-                  />
-                </div>
               </div>
             </TabsContent>
             
             {/* Step 4: Final Results */}
             <TabsContent value={WorkflowStep.RESULTS} className="space-y-6 mt-0">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white rounded-lg p-6 paper-shadow">
-                  <KeywordAnalysis 
-                    analysis={jobAnalysis} 
-                    optimization={optimizedCV}
-                    showFull={true}
-                  />
-                </div>
-                <div className="bg-white rounded-lg p-6 paper-shadow">
-                  <ResumePreview optimizedCV={optimizedCV} />
-                </div>
+                <KeywordAnalysis 
+                  analysis={jobAnalysis} 
+                  optimization={optimizedCV}
+                  showFull={true}
+                />
+                <ResumePreview optimizedCV={optimizedCV} />
               </div>
             </TabsContent>
           </Tabs>
