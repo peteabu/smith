@@ -592,6 +592,7 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
   matchingKeywords: string[];
   missingKeywords: string[];
   matchRate: number;
+  markdownContent?: string;
 }> {
   try {
     // Log the first 300 characters of input to debug extraction issues
@@ -684,7 +685,55 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
       ]
     });
 
-    const optimizedText = optimizationResponse.choices[0].message.content || originalCV;
+    const initialOptimizedText = optimizationResponse.choices[0].message.content || originalCV;
+    
+    // Add a review step to check the quality of the optimized resume and improve it if needed
+    console.log("Reviewing optimized resume for quality and coherence...");
+    
+    const reviewResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: 
+            "You are an expert resume reviewer and editor. Review the optimized resume for coherence, professionalism, and clarity. " +
+            "Ensure the resume reads naturally and doesn't sound robotic or forced. " +
+            "\n\nFOLLOW THESE REVIEW GUIDELINES:" +
+            "\n1. Improve any awkward phrases or sentences that sound unnatural" +
+            "\n2. Ensure the keyword optimization feels organic, not forced" +
+            "\n3. Fix any grammatical errors or typos" +
+            "\n4. Enhance clarity and readability" +
+            "\n5. Maintain consistency in tone and style throughout the resume" +
+            "\n6. Preserve all experience details, employment history, and education" +
+            "\n7. DO NOT add fictional content or experiences" +
+            "\n8. Maintain keyword density but improve the way they are incorporated" +
+            "\n\nAfter your review, provide the COMPLETE improved resume. Then add a markdown version as well after your main response, prefixed with 'MARKDOWN_VERSION:'."
+        },
+        {
+          role: "user",
+          content: `OPTIMIZED RESUME TO REVIEW:\n\n${initialOptimizedText}\n\nKEYWORDS:\n${keywordsArray.join(', ')}\n\nPlease review this resume for quality, improve any awkward phrasing or unnatural incorporation of keywords, and provide both the improved resume and a markdown version.`
+        }
+      ]
+    });
+    
+    const reviewResponse_content = reviewResponse.choices[0].message.content || initialOptimizedText;
+    
+    // Extract the markdown version from the response
+    let optimizedText = reviewResponse_content;
+    let markdownContent = '';
+    
+    if (reviewResponse_content.includes('MARKDOWN_VERSION:')) {
+      const parts = reviewResponse_content.split('MARKDOWN_VERSION:');
+      optimizedText = parts[0].trim();
+      markdownContent = parts[1].trim();
+    }
+    
+    console.log("Resume review and enhancement complete.");
+    
+    // If no markdown content was provided, use the optimized text
+    if (!markdownContent) {
+      markdownContent = optimizedText;
+    }
 
     // Calculate how many keywords are now present in the optimized version
     const optimizedTextLower = optimizedText.toLowerCase();
