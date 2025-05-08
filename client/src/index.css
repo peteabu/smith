@@ -173,6 +173,31 @@
     @apply bg-[#5D4E3C];
   }
   
+  /* Mobile optimization utilities */
+  .mobile-scroll {
+    @apply bg-clip-padding;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .touch-feedback {
+    @apply active:scale-[0.98] active:bg-cream transition-all duration-150;
+    touch-action: manipulation;
+  }
+  
+  .mobile-button {
+    -webkit-tap-highlight-color: transparent;
+    @apply py-3 sm:py-2 select-none;
+  }
+  
   .bg-paper-texture {
     background-color: #F3F0E8;
     background-image: 
