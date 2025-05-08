@@ -1,6 +1,12 @@
 import { apiRequest } from "./queryClient";
 import { fileToBase64 } from "./utils";
 
+export interface WebSearchResult {
+  title?: string;
+  url: string;
+  snippet?: string;
+}
+
 export interface KeywordAnalysisResult {
   keywords: string[];
   content: string;
@@ -9,10 +15,17 @@ export interface KeywordAnalysisResult {
   industryKeywords?: string[];
   recruitmentInsights?: string;
   atsFindings?: string;
+  webSearchResults?: {
+    role?: WebSearchResult[];
+    industry?: WebSearchResult[];
+    recruitment?: WebSearchResult[];
+    ats?: WebSearchResult[];
+  };
   analysisSteps?: {
     step: string;
     status: 'completed' | 'in-progress' | 'pending';
     result?: string;
+    sources?: string[];
   }[];
 }
 

@@ -10,6 +10,12 @@ import { Progress } from "@/components/ui/progress";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AlertCircle, CheckCircle2, Clock, Target } from "lucide-react";
 
+interface WebSearchResult {
+  title?: string;
+  url: string;
+  snippet?: string;
+}
+
 interface KeywordAnalysisProps {
   analysis: KeywordAnalysisResult | null;
   optimization: CvOptimizationResult | null;
@@ -34,7 +40,8 @@ export function KeywordAnalysis({ analysis, optimization }: KeywordAnalysisProps
     roleResearch, 
     industryKeywords, 
     recruitmentInsights, 
-    atsFindings 
+    atsFindings,
+    webSearchResults
   } = analysis;
 
   // Helper to render the status badge for each step
@@ -58,10 +65,11 @@ export function KeywordAnalysis({ analysis, optimization }: KeywordAnalysisProps
       </p>
 
       <Tabs defaultValue="keywords" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-4 mb-4">
+        <TabsList className="grid grid-cols-5 mb-4">
           <TabsTrigger value="keywords">Keywords</TabsTrigger>
           <TabsTrigger value="research">Research</TabsTrigger>
           <TabsTrigger value="ats">ATS Insights</TabsTrigger>
+          <TabsTrigger value="sources">Sources</TabsTrigger>
           <TabsTrigger value="process">Process</TabsTrigger>
         </TabsList>
         

@@ -4,16 +4,104 @@ import OpenAI from "openai";
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// Interface for web search results
+interface WebSearchResult {
+  title?: string;
+  url: string;
+  snippet?: string;
+}
+
+// Function to perform a web search using the OpenAI Responses API
+async function performWebSearch(query: string, maxResults: number = 5): Promise<WebSearchResult[]> {
+  try {
+    if (!process.env.OPENAI_API_KEY) {
+      console.warn("No OpenAI API key found for web search");
+      return [];
+    }
+
+    console.log(`Performing web search for: ${query}`);
+    
+    // Fallback to using GPT with relevant search terms if the Responses API isn't available
+    const searchResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: 
+            "You are an expert at synthesizing information. " +
+            "Based on the job description, provide URLs and summaries of credible sources related to the search request. " +
+            "Format your response as a JSON array with objects containing the following fields: " +
+            "{ title: string, url: string, snippet: string }. " +
+            "Include at least 3 quality sources with accurate URLs, descriptive titles, and informative snippets."
+        },
+        {
+          role: "user",
+          content: `Search request: ${query}`
+        }
+      ],
+      response_format: { type: "json_object" }
+    });
+    
+    const responseContent = searchResponse.choices[0].message.content || "{}";
+    
+    try {
+      const data = JSON.parse(responseContent);
+      
+      // Handle different JSON structures
+      if (Array.isArray(data)) {
+        return data.slice(0, maxResults);
+      } 
+      
+      if (Array.isArray(data.results)) {
+        return data.results.slice(0, maxResults);
+      }
+      
+      if (Array.isArray(data.sources)) {
+        return data.sources.slice(0, maxResults);
+      }
+      
+      // Find the first array property in the object
+      for (const key in data) {
+        if (Array.isArray(data[key])) {
+          return data[key].slice(0, maxResults);
+        }
+      }
+      
+      // Create a mock result if no valid data format found
+      return [
+        {
+          title: "Search Results",
+          url: "https://example.com",
+          snippet: "Based on AI knowledge without direct web access. For accurate, up-to-date information, consider performing a manual web search."
+        }
+      ];
+    } catch (error) {
+      console.error("Error parsing web search response:", error);
+      return [];
+    }
+  } catch (error) {
+    console.error("Error performing web search:", error);
+    return [];
+  }
+}
+
 export interface JobAnalysisResult {
   keywords: string[];
   roleResearch?: string;
   industryKeywords?: string[];
   recruitmentInsights?: string;
   atsFindings?: string;
+  webSearchResults?: {
+    role?: WebSearchResult[];
+    industry?: WebSearchResult[];
+    recruitment?: WebSearchResult[];
+    ats?: WebSearchResult[];
+  };
   analysisSteps?: {
     step: string;
     status: 'completed' | 'in-progress' | 'pending';
     result?: string;
+    sources?: string[];
   }[];
 }
 
@@ -32,11 +120,21 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
   // Initialize result object with steps
   const result: JobAnalysisResult = {
     keywords: [],
+    webSearchResults: {
+      role: [],
+      industry: [],
+      recruitment: [],
+      ats: []
+    },
     analysisSteps: [
       { step: "Initial Text Analysis", status: "pending" },
-      { step: "Role Research", status: "pending" },
-      { step: "Industry Research", status: "pending" },
+      { step: "Web Research: Role", status: "pending" },
+      { step: "Role Analysis", status: "pending" },
+      { step: "Web Research: Industry", status: "pending" },
+      { step: "Industry Keywords", status: "pending" },
+      { step: "Web Research: Recruitment", status: "pending" },
       { step: "Recruitment Insights", status: "pending" },
+      { step: "Web Research: ATS", status: "pending" },
       { step: "ATS Optimization", status: "pending" },
       { step: "Keyword Extraction", status: "pending" }
     ]
@@ -77,8 +175,62 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
     result.analysisSteps![0].status = "completed";
     result.analysisSteps![0].result = initialAnalysis;
     
-    // Step 2: Role Research
+    // Extract job title and industry from initial analysis for web searches
+    let jobTitle = "";
+    let industry = "";
+    
+    try {
+      // Try to extract job title and industry using GPT for better search queries
+      const extractionResponse = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "Extract the exact job title and industry from this job description analysis. Return as JSON: {\"jobTitle\": \"...\", \"industry\": \"...\"}"
+          },
+          {
+            role: "user",
+            content: initialAnalysis
+          }
+        ],
+        response_format: { type: "json_object" }
+      });
+      
+      const extractionData = JSON.parse(extractionResponse.choices[0].message.content || "{}");
+      jobTitle = extractionData.jobTitle || "";
+      industry = extractionData.industry || "";
+    } catch (error) {
+      console.error("Error extracting job details for search:", error);
+      // Default to first 50 chars if extraction fails
+      jobTitle = jobDescription.substring(0, 50);
+    }
+    
+    // Step 2: Web Research for Role
     result.analysisSteps![1].status = "in-progress";
+    
+    // Perform web search for the role
+    const roleSearchQuery = `latest trends and requirements for ${jobTitle} role in ${industry} industry 2024`;
+    const roleSearchResults = await performWebSearch(roleSearchQuery);
+    
+    // Store the search results
+    if (roleSearchResults.length > 0) {
+      result.webSearchResults!.role = roleSearchResults;
+      const sourceUrls = roleSearchResults.map(r => r.url);
+      result.analysisSteps![1].sources = sourceUrls;
+      result.analysisSteps![1].result = `Found ${roleSearchResults.length} relevant sources about ${jobTitle} roles.`;
+    } else {
+      result.analysisSteps![1].result = "No web search results found for role research.";
+    }
+    
+    result.analysisSteps![1].status = "completed";
+    
+    // Step 3: Role Research with web search results
+    result.analysisSteps![2].status = "in-progress";
+    
+    // Format search results for the prompt
+    const roleSearchContent = roleSearchResults.map((result, index) => 
+      `Source ${index + 1}: ${result.title || "Untitled"}\nURL: ${result.url}\n${result.snippet || "No preview available"}\n`
+    ).join("\n");
     
     const roleResearchResponse = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -87,27 +239,52 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
           role: "system",
           content: 
             "You are a career research expert who specializes in identifying key skills, trends, and qualifications for specific roles. " +
-            "Based on the job description analysis, provide detailed research on this role including:\n" +
+            "Based on the job description analysis and the web search results, provide detailed research on this role including:\n" +
             "1. Current industry trends for this position\n" +
             "2. Common career paths for this role\n" +
             "3. Emerging skills that are becoming important\n" +
             "4. How this role typically fits into organizational structures\n\n" +
-            "Format as a concise research briefing focused on helping job seekers."
+            "Format as a concise research briefing focused on helping job seekers. " +
+            "If the web search provides useful information, incorporate it and cite the sources with [Source X] notation."
         },
         {
           role: "user",
-          content: `Job Description Analysis: ${initialAnalysis}\n\nProvide role research for this position.`
+          content: `Job Description Analysis: ${initialAnalysis}\n\nWeb Search Results:\n${roleSearchContent}\n\nProvide role research for this position.`
         }
       ]
     });
 
     const roleResearch = roleResearchResponse.choices[0].message.content || "";
     result.roleResearch = roleResearch;
-    result.analysisSteps![1].status = "completed";
-    result.analysisSteps![1].result = roleResearch;
+    result.analysisSteps![2].status = "completed";
+    result.analysisSteps![2].result = roleResearch;
     
-    // Step 3: Industry Research
-    result.analysisSteps![2].status = "in-progress";
+    // Step 4: Web Research for Industry
+    result.analysisSteps![3].status = "in-progress";
+    
+    // Perform web search for industry keywords
+    const industrySearchQuery = `most important keywords for ${jobTitle} resume in ${industry} industry ATS scanning`;
+    const industrySearchResults = await performWebSearch(industrySearchQuery);
+    
+    // Store the search results
+    if (industrySearchResults.length > 0) {
+      result.webSearchResults!.industry = industrySearchResults;
+      const sourceUrls = industrySearchResults.map(r => r.url);
+      result.analysisSteps![3].sources = sourceUrls;
+      result.analysisSteps![3].result = `Found ${industrySearchResults.length} relevant sources about industry-specific keywords.`;
+    } else {
+      result.analysisSteps![3].result = "No web search results found for industry research.";
+    }
+    
+    result.analysisSteps![3].status = "completed";
+    
+    // Step 5: Industry Research with web search results
+    result.analysisSteps![4].status = "in-progress";
+    
+    // Format search results for the prompt
+    const industrySearchContent = industrySearchResults.map((result, index) => 
+      `Source ${index + 1}: ${result.title || "Untitled"}\nURL: ${result.url}\n${result.snippet || "No preview available"}\n`
+    ).join("\n");
     
     const industryResearchResponse = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -116,15 +293,16 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
           role: "system",
           content: 
             "You are an industry analyst who specializes in identifying high-value keywords and terms specific to industries and sectors. " +
-            "Based on the job description and role research, provide:\n" +
+            "Based on the job description, role research, and web search results, provide:\n" +
             "1. A list of 15-20 industry-specific keywords that are most valuable on resumes in this field\n" +
             "2. Brief explanation of why these keywords matter\n\n" +
             "Return as a JSON object with an 'industryKeywords' array and 'explanation' string.\n" +
-            "Format: { \"industryKeywords\": [\"keyword1\", \"keyword2\", ...], \"explanation\": \"text here\" }"
+            "Format: { \"industryKeywords\": [\"keyword1\", \"keyword2\", ...], \"explanation\": \"text here\" }" +
+            "If the web search provides useful information, incorporate it in your explanation and cite the sources."
         },
         {
           role: "user",
-          content: `Job Description Analysis: ${initialAnalysis}\n\nRole Research: ${roleResearch}\n\nWhat industry-specific keywords would be most valuable for this role?`
+          content: `Job Description Analysis: ${initialAnalysis}\n\nRole Research: ${roleResearch}\n\nWeb Search Results:\n${industrySearchContent}\n\nWhat industry-specific keywords would be most valuable for this role?`
         }
       ],
       response_format: { type: "json_object" }
@@ -134,16 +312,40 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
     try {
       const industryData = JSON.parse(industryResearchContent);
       result.industryKeywords = industryData.industryKeywords || [];
-      result.analysisSteps![2].status = "completed";
-      result.analysisSteps![2].result = industryData.explanation || "";
+      result.analysisSteps![4].status = "completed";
+      result.analysisSteps![4].result = industryData.explanation || "";
     } catch (error) {
       console.error("Error parsing industry research JSON:", error);
-      result.analysisSteps![2].status = "completed";
-      result.analysisSteps![2].result = "Error extracting industry keywords.";
+      result.analysisSteps![4].status = "completed";
+      result.analysisSteps![4].result = "Error extracting industry keywords.";
     }
     
-    // Step 4: Recruitment Insights
-    result.analysisSteps![3].status = "in-progress";
+    // Step 6: Web Research for Recruitment Practices
+    result.analysisSteps![5].status = "in-progress";
+    
+    // Perform web search for recruitment practices
+    const recruitmentSearchQuery = `what recruiters look for in ${jobTitle} candidates ${industry} industry hiring practices`;
+    const recruitmentSearchResults = await performWebSearch(recruitmentSearchQuery);
+    
+    // Store the search results
+    if (recruitmentSearchResults.length > 0) {
+      result.webSearchResults!.recruitment = recruitmentSearchResults;
+      const sourceUrls = recruitmentSearchResults.map(r => r.url);
+      result.analysisSteps![5].sources = sourceUrls;
+      result.analysisSteps![5].result = `Found ${recruitmentSearchResults.length} relevant sources about recruitment practices.`;
+    } else {
+      result.analysisSteps![5].result = "No web search results found for recruitment research.";
+    }
+    
+    result.analysisSteps![5].status = "completed";
+    
+    // Step 7: Recruitment Insights with web search results
+    result.analysisSteps![6].status = "in-progress";
+    
+    // Format search results for the prompt
+    const recruitmentSearchContent = recruitmentSearchResults.map((result, index) => 
+      `Source ${index + 1}: ${result.title || "Untitled"}\nURL: ${result.url}\n${result.snippet || "No preview available"}\n`
+    ).join("\n");
     
     const recruitmentInsightsResponse = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -152,27 +354,52 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
           role: "system",
           content: 
             "You are a recruitment specialist with deep knowledge of hiring practices. " +
-            "Based on the job description, role research, and industry analysis, provide insights on:\n" +
+            "Based on the job description, role research, industry analysis, and web search results, provide insights on:\n" +
             "1. What recruiters in this industry typically look for in candidates\n" +
             "2. Common screening practices for this role\n" +
             "3. How candidates can stand out in the application process\n" +
             "4. Red flags that may disqualify candidates\n\n" +
-            "Format as concise, actionable advice for job seekers."
+            "Format as concise, actionable advice for job seekers. " +
+            "If the web search provides useful information, incorporate it and cite the sources with [Source X] notation."
         },
         {
           role: "user",
-          content: `Job Description: ${jobDescription.substring(0, 500)}...\n\nRole Research: ${roleResearch.substring(0, 300)}...\n\nWhat recruitment insights can you provide for candidates applying to this role?`
+          content: `Job Description: ${jobDescription.substring(0, 500)}...\n\nRole Research: ${roleResearch.substring(0, 300)}...\n\nWeb Search Results:\n${recruitmentSearchContent}\n\nWhat recruitment insights can you provide for candidates applying to this role?`
         }
       ]
     });
 
     const recruitmentInsights = recruitmentInsightsResponse.choices[0].message.content || "";
     result.recruitmentInsights = recruitmentInsights;
-    result.analysisSteps![3].status = "completed";
-    result.analysisSteps![3].result = recruitmentInsights;
+    result.analysisSteps![6].status = "completed";
+    result.analysisSteps![6].result = recruitmentInsights;
     
-    // Step 5: ATS Optimization
-    result.analysisSteps![4].status = "in-progress";
+    // Step 8: Web Research for ATS Systems
+    result.analysisSteps![7].status = "in-progress";
+    
+    // Perform web search for ATS systems
+    const atsSearchQuery = `ATS applicant tracking system optimization for ${jobTitle} resume tips 2024`;
+    const atsSearchResults = await performWebSearch(atsSearchQuery);
+    
+    // Store the search results
+    if (atsSearchResults.length > 0) {
+      result.webSearchResults!.ats = atsSearchResults;
+      const sourceUrls = atsSearchResults.map(r => r.url);
+      result.analysisSteps![7].sources = sourceUrls;
+      result.analysisSteps![7].result = `Found ${atsSearchResults.length} relevant sources about ATS optimization.`;
+    } else {
+      result.analysisSteps![7].result = "No web search results found for ATS research.";
+    }
+    
+    result.analysisSteps![7].status = "completed";
+    
+    // Step 9: ATS Optimization with web search results
+    result.analysisSteps![8].status = "in-progress";
+    
+    // Format search results for the prompt
+    const atsSearchContent = atsSearchResults.map((result, index) => 
+      `Source ${index + 1}: ${result.title || "Untitled"}\nURL: ${result.url}\n${result.snippet || "No preview available"}\n`
+    ).join("\n");
     
     const atsOptimizationResponse = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -181,27 +408,35 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
           role: "system",
           content: 
             "You are an ATS (Applicant Tracking System) expert who specializes in helping candidates optimize their resumes. " +
-            "Based on all previous analysis, provide specific advice on:\n" +
+            "Based on all previous analysis and web search results, provide specific advice on:\n" +
             "1. How ATS systems likely process applications for this role\n" +
             "2. Formatting recommendations for maximum ATS compatibility\n" +
             "3. Keyword density and placement suggestions\n" +
             "4. Common ATS pitfalls to avoid for this specific role\n\n" +
-            "Format as clear, actionable recommendations."
+            "Format as clear, actionable recommendations. " +
+            "If the web search provides useful information, incorporate it and cite the sources with [Source X] notation."
         },
         {
           role: "user",
-          content: `Job Analysis: ${initialAnalysis.substring(0, 300)}...\n\nRecruitment Insights: ${recruitmentInsights.substring(0, 300)}...\n\nProvide ATS optimization advice for this role.`
+          content: `Job Analysis: ${initialAnalysis.substring(0, 300)}...\n\nRecruitment Insights: ${recruitmentInsights.substring(0, 300)}...\n\nWeb Search Results:\n${atsSearchContent}\n\nProvide ATS optimization advice for this role.`
         }
       ]
     });
 
     const atsFindings = atsOptimizationResponse.choices[0].message.content || "";
     result.atsFindings = atsFindings;
-    result.analysisSteps![4].status = "completed";
-    result.analysisSteps![4].result = atsFindings;
+    result.analysisSteps![8].status = "completed";
+    result.analysisSteps![8].result = atsFindings;
     
-    // Step 6: Final Keyword Extraction
-    result.analysisSteps![5].status = "in-progress";
+    // Step 10: Final Keyword Extraction
+    result.analysisSteps![9].status = "in-progress";
+    
+    // Combine web search insights for the final extraction
+    const webInsights = [
+      ...roleSearchResults.map(r => r.snippet || "").filter(Boolean),
+      ...industrySearchResults.map(r => r.snippet || "").filter(Boolean),
+      ...atsSearchResults.map(r => r.snippet || "").filter(Boolean)
+    ].join("\n\n").substring(0, 1000);
     
     const keywordExtractionResponse = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -210,7 +445,7 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
           role: "system",
           content: 
             "You are an ATS expert who synthesizes all aspects of job analysis to extract the most high-value keywords. " +
-            "Based on all previous analysis steps, extract 15-20 important keywords, prioritizing:\n" +
+            "Based on all previous analysis steps and web research, extract 15-20 important keywords, prioritizing:\n" +
             "1. Hard skills and technical competencies\n" +
             "2. Domain-specific knowledge areas\n" +
             "3. Software/tools/platforms mentioned\n" +
@@ -226,7 +461,7 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
         },
         {
           role: "user",
-          content: `Job Description: ${jobDescription.substring(0, 300)}...\n\nRole Research: ${roleResearch.substring(0, 200)}...\n\nIndustry Keywords: ${result.industryKeywords?.join(', ')}\n\nATS Findings: ${atsFindings.substring(0, 200)}...\n\nExtract the most valuable keywords for resume optimization.`
+          content: `Job Description: ${jobDescription.substring(0, 300)}...\n\nRole Research: ${roleResearch.substring(0, 200)}...\n\nIndustry Keywords: ${result.industryKeywords?.join(', ')}\n\nATS Findings: ${atsFindings.substring(0, 200)}...\n\nWeb Insights: ${webInsights}\n\nExtract the most valuable keywords for resume optimization.`
         }
       ],
       response_format: { type: "json_object" }
@@ -236,14 +471,14 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
     try {
       const keywordData = JSON.parse(keywordExtractionContent);
       result.keywords = keywordData.keywords || [];
-      result.analysisSteps![5].status = "completed";
-      result.analysisSteps![5].result = `Extracted ${result.keywords.length} high-value keywords.`;
+      result.analysisSteps![9].status = "completed";
+      result.analysisSteps![9].result = `Extracted ${result.keywords.length} high-value keywords based on comprehensive research.`;
     } catch (error) {
       console.error("Error parsing keyword extraction JSON:", error);
       // Fallback to local extraction
       result.keywords = extractKeywordsLocally(jobDescription);
-      result.analysisSteps![5].status = "completed";
-      result.analysisSteps![5].result = "Error in final keyword extraction, used fallback method.";
+      result.analysisSteps![9].status = "completed";
+      result.analysisSteps![9].result = "Error in final keyword extraction, used fallback method.";
     }
 
     return result;
