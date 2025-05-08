@@ -569,7 +569,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.get('/api/cv/export/:id', async (req: Request, res: Response) => {
     try {
       const optimizedCvId = parseInt(req.params.id);
-      const format = (req.query.format as 'text' | 'latex' | 'docx') || 'text';
+      const format = (req.query.format as 'text' | 'markdown' | 'docx') || 'text';
       const useOriginal = req.query.original === 'true'; // Option to get original CV content
       
       console.log(`CV Export requested - ID: ${optimizedCvId}, Format: ${format}, Use Original: ${useOriginal}`);
@@ -721,37 +721,33 @@ export async function registerRoutes(app: Express): Promise<void> {
       const filePrefix = useOriginal ? 'original' : 'optimized';
       let filename = `${filePrefix}-cv-${new Date().toISOString().slice(0, 10)}`;
       
-      if (format === 'latex') {
-        // Extract sections and create LaTeX formatted text
+      if (format === 'markdown') {
+        // Extract sections and create Markdown formatted text
         const plainText = cleanText(contentToUse);
         
-        exportContent = `\\documentclass{article}
-\\usepackage[utf8]{inputenc}
-\\usepackage[margin=1in]{geometry}
-\\usepackage{enumitem}
-\\usepackage{hyperref}
-
-\\title{Professional Resume}
-\\author{}
-\\date{\\today}
-
-\\begin{document}
-
-\\maketitle
-
-${plainText.split('\n\n').map(paragraph => {
-  // Attempt to detect if this is a heading
-  if (paragraph.length < 50 || paragraph.toUpperCase() === paragraph) {
-    return `\\section{${paragraph.trim()}}`;
-  } else {
-    return paragraph.trim();
-  }
-}).join('\n\n')}
-
-\\end{document}`;
+        // Convert the plain text to Markdown format
+        let markdownContent = '';
         
-        mimeType = 'application/x-latex';
-        filename += '.tex';
+        // Process each paragraph into Markdown
+        const paragraphs = plainText.split('\n\n');
+        paragraphs.forEach(paragraph => {
+          if (!paragraph.trim()) return;
+          
+          // Check if it's likely a heading
+          if (paragraph.length < 50 || paragraph.toUpperCase() === paragraph) {
+            markdownContent += `\n## ${paragraph.trim()}\n\n`;
+          } else if (paragraph.startsWith('•')) {
+            // It's a list item - make sure it's properly formatted
+            markdownContent += paragraph.replace(/^•\s*/gm, '- ') + '\n\n';
+          } else {
+            // Regular paragraph
+            markdownContent += paragraph.trim() + '\n\n';
+          }
+        });
+        
+        exportContent = markdownContent;
+        mimeType = 'text/markdown';
+        filename += '.md';
       } else if (format === 'docx') {
         // Extract content as simple HTML that Word can import
         // Strip out complex formatting but keep basic structure
@@ -800,7 +796,7 @@ ${plainText.split('\n\n').map(paragraph => {
   app.get('/api/cv/download/:id', async (req: Request, res: Response) => {
     try {
       const id = req.params.id;
-      const format = req.query.format === 'latex' ? 'latex' : 'text';
+      const format = req.query.format === 'markdown' ? 'markdown' : 'text';
       
       // Redirect to the export endpoint
       res.redirect(`/api/cv/export/${id}?format=${format}`);

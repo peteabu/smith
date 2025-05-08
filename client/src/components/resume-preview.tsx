@@ -89,8 +89,26 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
       const content = await response.text();
       console.log("Content fetched for copying:", content.substring(0, 100) + "...");
       
-      // Copy to clipboard
-      await navigator.clipboard.writeText(content);
+      // Log the content to make sure we're getting it
+      if (content.length > 100) {
+        console.log("Content ready for clipboard:", content.substring(0, 100) + "...[truncated]");
+      } else {
+        console.log("Content ready for clipboard (EMPTY OR SHORT):", content);
+      }
+      
+      try {
+        // Copy to clipboard - using a more reliable method
+        const textArea = document.createElement('textarea');
+        textArea.value = content;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      } catch (clipboardError) {
+        console.error("Clipboard copy error:", clipboardError);
+        // Fallback to the original method
+        await navigator.clipboard.writeText(content);
+      }
       
       let formatName = 'Plain Text';
       if (format === 'markdown') formatName = 'Markdown';
