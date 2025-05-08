@@ -135,11 +135,11 @@ export default function Home() {
           >
             <div className="mb-6 relative">
               <div className="absolute top-0 left-0 w-full h-full bg-paper -z-10 paper-shadow"></div>
-              <div className="flex flex-wrap w-full font-mono text-sm border-b border-brown/30">
+              <div className="flex overflow-x-auto mobile-scroll w-full font-mono text-xs sm:text-sm border-b border-brown/30">
                 <button
                   type="button"
                   onClick={() => setActiveStep(WorkflowStep.UPLOAD_CV)}
-                  className={`flex items-center gap-2 py-3 px-4 flex-grow border-r border-brown/30 ${
+                  className={`flex items-center gap-2 py-3 px-4 flex-grow border-r border-brown/30 mobile-button touch-feedback ${
                     activeStep === WorkflowStep.UPLOAD_CV 
                       ? 'bg-white text-brown-dark font-bold' 
                       : 'text-brown hover:bg-white/50'
@@ -154,7 +154,7 @@ export default function Home() {
                   type="button"
                   onClick={() => cvId && setActiveStep(WorkflowStep.ANALYZE_JOB)}
                   disabled={!cvId}
-                  className={`flex items-center gap-2 py-3 px-4 flex-grow border-r border-brown/30 ${
+                  className={`flex items-center gap-2 py-3 px-4 flex-grow border-r border-brown/30 mobile-button touch-feedback ${
                     activeStep === WorkflowStep.ANALYZE_JOB 
                       ? 'bg-white text-brown-dark font-bold' 
                       : 'text-brown hover:bg-white/50'
@@ -169,7 +169,7 @@ export default function Home() {
                   type="button"
                   onClick={() => jobAnalysis && setActiveStep(WorkflowStep.OPTIMIZE)}
                   disabled={!jobAnalysis}
-                  className={`flex items-center gap-2 py-3 px-4 flex-grow border-r border-brown/30 ${
+                  className={`flex items-center gap-2 py-3 px-4 flex-grow border-r border-brown/30 mobile-button touch-feedback ${
                     activeStep === WorkflowStep.OPTIMIZE 
                       ? 'bg-white text-brown-dark font-bold' 
                       : 'text-brown hover:bg-white/50'
@@ -184,7 +184,7 @@ export default function Home() {
                   type="button"
                   onClick={() => optimizedCV && setActiveStep(WorkflowStep.RESULTS)}
                   disabled={!optimizedCV}
-                  className={`flex items-center gap-2 py-3 px-4 flex-grow ${
+                  className={`flex items-center gap-2 py-3 px-4 flex-grow mobile-button touch-feedback ${
                     activeStep === WorkflowStep.RESULTS 
                       ? 'bg-white text-brown-dark font-bold' 
                       : 'text-brown hover:bg-white/50'
@@ -239,7 +239,7 @@ export default function Home() {
           </Tabs>
         </main>
         
-        <footer className="text-center py-6 text-brown text-xs">
+        <footer className="text-center py-4 sm:py-6 text-brown text-xs safe-bottom mt-4">
           <p>CV Optimizer &copy; {new Date().getFullYear()} | A minimal ATS-friendly resume builder</p>
         </footer>
         

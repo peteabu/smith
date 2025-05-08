@@ -107,7 +107,11 @@
   }
   
   .touch-feedback {
-    @apply active:bg-brown/10 transition-colors duration-75;
+    @apply transition-colors duration-75;
+  }
+  
+  .touch-feedback:active {
+    background-color: rgba(139, 125, 107, 0.1);
   }
   
   .mobile-scroll {
