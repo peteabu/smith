@@ -199,26 +199,26 @@ export async function uploadCV(
 }
 
 /**
- * Downloads an optimized CV in the specified format
+ * Exports an optimized CV in the specified format
  */
 export async function downloadOptimizedCV(
   optimizedCvId: number,
-  format: 'pdf' | 'latex'
+  format: 'text' | 'latex' | 'docx'
 ): Promise<string> {
   try {
-    const response = await fetch(`/api/cv/download/${optimizedCvId}?format=${format}`, {
+    const response = await fetch(`/api/cv/export/${optimizedCvId}?format=${format}`, {
       credentials: 'include',
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to download CV: ${response.statusText}`);
+      throw new Error(`Failed to export CV: ${response.statusText}`);
     }
     
     // Get the download URL from the response
     const blob = await response.blob();
     return URL.createObjectURL(blob);
   } catch (error) {
-    console.error('Failed to download CV:', error);
+    console.error('Failed to export CV:', error);
     throw error;
   }
 }

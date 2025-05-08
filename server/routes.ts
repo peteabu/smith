@@ -520,12 +520,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get('/api/cv/download/:id', async (req: Request, res: Response) => {
+  app.get('/api/cv/export/:id', async (req: Request, res: Response) => {
     try {
       const optimizedCvId = parseInt(req.params.id);
-      const format = (req.query.format as 'pdf' | 'latex') || 'pdf';
+      const format = (req.query.format as 'text' | 'latex' | 'docx') || 'text';
       
-      console.log(`PDF Download requested - ID: ${optimizedCvId}, Format: ${format}`);
+      console.log(`CV Export requested - ID: ${optimizedCvId}, Format: ${format}`);
       
       // Get the optimized CV
       const optimizedCV = await storage.getOptimizedCV(optimizedCvId);
@@ -544,14 +544,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Found original CV - ID: ${cv?.id}, Text length: ${cv?.extractedText?.length || 0} characters`);
       }
       
-      // Get the job description if available
-      let jobDescription = null;
-      if (optimizedCV.jobDescriptionId !== null) {
-        jobDescription = await storage.getJobDescription(optimizedCV.jobDescriptionId);
-        console.log(`Found job description - ID: ${jobDescription?.id}`);
-      }
-      
-      // Make sure we have content to generate the PDF
+      // Make sure we have content to generate the export
       if (!optimizedCV.content || optimizedCV.content.trim().length === 0) {
         console.error("Optimized CV content is empty, generating fallback content");
         
@@ -566,29 +559,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
         optimizedCV.content = fallbackContent;
       }
       
-      // Generate PDF from the optimized content
-      const filename = `optimized-cv-${new Date().toISOString().slice(0, 10)}.pdf`;
-      console.log(`Generating PDF with ${format} format...`);
+      // Clean HTML content
+      const cleanText = (html: string): string => {
+        return html
+          .replace(/<span class="bg-green-100[^>]*>([\s\S]*?)<\/span>/gi, '$1')
+          .replace(/<span class="font-semibold">([\s\S]*?)<\/span>/gi, '$1')
+          .replace(/<[^>]*>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .trim();
+      };
       
-      // Create the PDF
-      const pdfBuffer = createPDF(optimizedCV.content, format);
-      console.log(`PDF generated - Buffer size: ${pdfBuffer.length} bytes`);
+      let exportContent = '';
+      let mimeType = 'text/plain';
+      let filename = `optimized-cv-${new Date().toISOString().slice(0, 10)}`;
       
-      if (pdfBuffer.length === 0) {
-        throw new Error("Generated PDF is empty");
+      if (format === 'latex') {
+        // Extract sections and create LaTeX formatted text
+        const plainText = cleanText(optimizedCV.content);
+        
+        exportContent = `\\documentclass{article}
+\\usepackage[utf8]{inputenc}
+\\usepackage[margin=1in]{geometry}
+\\usepackage{enumitem}
+\\usepackage{hyperref}
+
+\\title{Professional Resume}
+\\author{}
+\\date{\\today}
+
+\\begin{document}
+
+\\maketitle
+
+${plainText.split('\n\n').map(paragraph => {
+  // Attempt to detect if this is a heading
+  if (paragraph.length < 50 || paragraph.toUpperCase() === paragraph) {
+    return `\\section{${paragraph.trim()}}`;
+  } else {
+    return paragraph.trim();
+  }
+}).join('\n\n')}
+
+\\end{document}`;
+        
+        mimeType = 'application/x-latex';
+        filename += '.tex';
+      } else if (format === 'docx') {
+        // Extract content as simple HTML that Word can import
+        // Strip out complex formatting but keep basic structure
+        exportContent = `<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Optimized Resume</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    h1, h2, h3 { font-weight: bold; }
+    .highlight { background-color: #e6ffe6; }
+  </style>
+</head>
+<body>
+  <h1>Professional Resume</h1>
+  ${optimizedCV.content
+    .replace(/<span class="bg-green-100[^>]*>([\s\S]*?)<\/span>/gi, '<span class="highlight">$1</span>')
+    .replace(/<div class="[^"]*">/gi, '<div>')
+  }
+</body>
+</html>`;
+        
+        mimeType = 'text/html';
+        filename += '.html'; // Word can open HTML files
+      } else {
+        // Default to plain text
+        exportContent = cleanText(optimizedCV.content);
+        filename += '.txt';
       }
       
       // Set headers for file download
-      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Type', mimeType);
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Content-Length', pdfBuffer.length);
       
-      // Send the PDF
-      res.send(pdfBuffer);
-      console.log(`PDF sent to client - ${filename}`);
+      // Send the exported content
+      res.send(exportContent);
+      console.log(`CV exported to client as ${format} - ${filename}`);
     } catch (error) {
-      console.error('Error downloading CV:', error);
+      console.error('Error exporting CV:', error);
+      res.status(500).json({ error: 'Failed to export CV' });
+    }
+  });
+  
+  // Keep the old endpoint for backward compatibility but make it use the export endpoint
+  app.get('/api/cv/download/:id', async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      const format = req.query.format === 'latex' ? 'latex' : 'text';
+      
+      // Redirect to the export endpoint
+      res.redirect(`/api/cv/export/${id}?format=${format}`);
+    } catch (error) {
+      console.error('Error redirecting download request:', error);
       res.status(500).json({ error: 'Failed to download CV' });
     }
   });
