@@ -133,80 +133,40 @@ function optimizeCV(cvText: string, keywords: string[]): {
   });
   
   // Calculate match rate
-  const matchRate = Math.round((matchingKeywords.length / keywords.length) * 100);
+  const matchRate = keywords.length > 0 
+    ? Math.round((matchingKeywords.length / keywords.length) * 100)
+    : 0;
   
   // Generate a simple HTML representation of the CV with highlighted keywords
-  // In a real application, this would be more sophisticated
-  const sections = cvText.split('\n\n');
-  let optimizedContent = '';
+  const htmlParts: string[] = [];
+  const paragraphs = cvText.split('\n\n');
   
-  // Create a sample CV with highlighted keywords
-  // This is a placeholder - in a real application this would use the actual CV content
-  optimizedContent = `
-    <div class="font-display text-2xl text-center mb-6">John Smith</div>
-    <div class="text-center mb-6 text-sm">
-      <div>john.smith@example.com | (555) 123-4567</div>
-      <div>San Francisco, CA | linkedin.com/in/johnsmith</div>
-    </div>
+  // Process each paragraph of the original CV
+  paragraphs.forEach((paragraph) => {
+    if (!paragraph.trim()) return;
     
-    <div class="mb-6">
-      <h2 class="font-display text-lg border-b border-brown/30 pb-2 mb-3">Professional Summary</h2>
-      <p class="text-sm">
-        Experienced Front-End Developer with a passion for creating responsive and user-friendly web applications.
-        ${matchingKeywords.slice(0, 3).map(kw => `<span class="bg-green-100 px-1">${kw}</span>`).join(' ')} 
-        with a strong focus on technical excellence. Skilled in optimizing web applications for maximum speed and scalability.
-      </p>
-    </div>
-    
-    <div class="mb-6">
-      <h2 class="font-display text-lg border-b border-brown/30 pb-2 mb-3">Skills</h2>
-      <div class="text-sm grid grid-cols-2 gap-2">
-        <div><span class="font-semibold">Languages:</span> ${matchingKeywords.slice(0, 2).map(kw => `<span class="bg-green-100 px-1">${kw}</span>`).join(', ')}, HTML5, CSS3</div>
-        <div><span class="font-semibold">Frameworks:</span> ${matchingKeywords.slice(2, 4).map(kw => `<span class="bg-green-100 px-1">${kw}</span>`).join(', ')}, Angular, Vue.js</div>
-        <div><span class="font-semibold">Design:</span> ${matchingKeywords.slice(4, 6).map(kw => `<span class="bg-green-100 px-1">${kw}</span>`).join(', ')}</div>
-        <div><span class="font-semibold">Tools:</span> Git, Webpack, Jest, CI/CD</div>
-      </div>
-    </div>
-    
-    <div class="mb-6">
-      <h2 class="font-display text-lg border-b border-brown/30 pb-2 mb-3">Experience</h2>
+    // Check if it might be a heading (short, ends with colon, or all caps)
+    if (paragraph.length < 50 || paragraph.endsWith(':') || paragraph === paragraph.toUpperCase()) {
+      htmlParts.push(`<h2 class="font-display text-lg border-b border-brown/30 pb-2 mb-3">${paragraph}</h2>`);
+    } else {
+      // For regular paragraphs, highlight any matching keywords
+      let highlightedParagraph = paragraph;
       
-      <div class="mb-4">
-        <div class="flex justify-between items-center">
-          <h3 class="font-semibold text-sm">Senior Developer</h3>
-          <span class="text-xs text-brown">2020 - Present</span>
-        </div>
-        <div class="italic text-sm mb-2">TechCorp, San Francisco, CA</div>
-        <ul class="text-sm list-disc pl-4 space-y-1">
-          <li>Led the development team in creating ${matchingKeywords.slice(6, 7).map(kw => `<span class="bg-green-100 px-1">${kw}</span>`).join(' ')} web applications</li>
-          <li>Implemented ${matchingKeywords.slice(7, 8).map(kw => `<span class="bg-green-100 px-1">${kw}</span>`).join(' ')} improvements resulting in 30% increase in user engagement</li>
-          <li>Developed reusable components using ${matchingKeywords.slice(8, 10).map(kw => `<span class="bg-green-100 px-1">${kw}</span>`).join(' and ')}</li>
-        </ul>
-      </div>
+      // Sort keywords by length (longest first) to avoid partial replacements
+      const sortedKeywords = [...matchingKeywords].sort((a, b) => b.length - a.length);
       
-      <div>
-        <div class="flex justify-between items-center">
-          <h3 class="font-semibold text-sm">Developer</h3>
-          <span class="text-xs text-brown">2017 - 2020</span>
-        </div>
-        <div class="italic text-sm mb-2">WebSolutions Inc., Boston, MA</div>
-        <ul class="text-sm list-disc pl-4 space-y-1">
-          <li>Built and maintained multiple client websites using ${matchingKeywords.slice(10, 12).map(kw => `<span class="bg-green-100 px-1">${kw}</span>`).join(' and ')}</li>
-          <li>Collaborated with designers to implement responsive designs</li>
-          <li>Participated in ${matchingKeywords.slice(12, 13).map(kw => `<span class="bg-green-100 px-1">${kw}</span>`).join(' ')} development processes</li>
-        </ul>
-      </div>
-    </div>
-    
-    <div>
-      <h2 class="font-display text-lg border-b border-brown/30 pb-2 mb-3">Education</h2>
-      <div class="flex justify-between items-center">
-        <h3 class="font-semibold text-sm">Bachelor of Science in Computer Science</h3>
-        <span class="text-xs text-brown">2013 - 2017</span>
-      </div>
-      <div class="text-sm italic">University of California, Berkeley</div>
-    </div>
-  `;
+      // Replace each keyword with a highlighted version, being careful not to replace substrings of already replaced text
+      sortedKeywords.forEach(keyword => {
+        const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+        highlightedParagraph = highlightedParagraph.replace(regex, 
+          `<span class="bg-green-100 px-1">$&</span>`);
+      });
+      
+      htmlParts.push(`<p class="mb-4 text-sm">${highlightedParagraph}</p>`);
+    }
+  });
+  
+  const optimizedContent = htmlParts.join('');
   
   return {
     optimizedContent,
@@ -326,12 +286,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       if (existingOptimizedCV) {
+        // Generate matching and missing keywords on the fly
+        const cvLower = cv.extractedText?.toLowerCase() || "";
+        const matchingKeywords: string[] = [];
+        const missingKeywords: string[] = [];
+        
+        (jobDescription.keywords || []).forEach(keyword => {
+          if (cvLower.includes(keyword.toLowerCase())) {
+            matchingKeywords.push(keyword);
+          } else {
+            missingKeywords.push(keyword);
+          }
+        });
+        
         return res.status(200).json({
           id: existingOptimizedCV.id,
           optimizedContent: existingOptimizedCV.content,
           matchRate: existingOptimizedCV.matchRate,
-          matchingKeywords: [], // These would be stored in a real app
-          missingKeywords: []  // These would be stored in a real app
+          matchingKeywords,
+          missingKeywords
         });
       }
       
