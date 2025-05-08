@@ -25,10 +25,10 @@ interface ResumePreviewProps {
 
 export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
   const { toast } = useToast();
-  const [isExporting, setIsExporting] = useState<'text' | 'latex' | 'docx' | null>(null);
+  const [isExporting, setIsExporting] = useState<'text' | 'markdown' | 'docx' | null>(null);
   const [isCopying, setIsCopying] = useState<string | null>(null);
 
-  const handleExport = async (format: 'text' | 'latex' | 'docx', useOriginal: boolean = false) => {
+  const handleExport = async (format: 'text' | 'markdown' | 'docx', useOriginal: boolean = false) => {
     if (!optimizedCV?.id) return;
     
     setIsExporting(format);
@@ -48,7 +48,7 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
       }, 5000);
       
       let formatName = 'Plain Text';
-      if (format === 'latex') formatName = 'LaTeX';
+      if (format === 'markdown') formatName = 'Markdown';
       if (format === 'docx') formatName = 'Word-compatible HTML';
       
       const cvType = useOriginal ? 'original' : 'optimized';
@@ -72,7 +72,7 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
   };
   
   // Function to fetch and copy content to clipboard
-  const handleCopy = async (format: 'text' | 'latex' | 'docx', useOriginal: boolean = false) => {
+  const handleCopy = async (format: 'text' | 'markdown' | 'docx', useOriginal: boolean = false) => {
     if (!optimizedCV?.id) return;
     
     const copyId = `${format}-${useOriginal ? 'original' : 'optimized'}`;
@@ -87,12 +87,13 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
       }
       
       const content = await response.text();
+      console.log("Content fetched for copying:", content.substring(0, 100) + "...");
       
       // Copy to clipboard
       await navigator.clipboard.writeText(content);
       
       let formatName = 'Plain Text';
-      if (format === 'latex') formatName = 'LaTeX';
+      if (format === 'markdown') formatName = 'Markdown';
       if (format === 'docx') formatName = 'Word-compatible HTML';
       
       const cvType = useOriginal ? 'original' : 'optimized';
@@ -179,9 +180,9 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
                         <FileText className="h-4 w-4 mr-2" />
                         <span>Text (.txt)</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleExport('latex')}>
+                      <DropdownMenuItem onClick={() => handleExport('markdown')}>
                         <Code className="h-4 w-4 mr-2" />
-                        <span>LaTeX (.tex)</span>
+                        <span>Markdown (.md)</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleExport('docx')}>
                         <File className="h-4 w-4 mr-2" />
@@ -205,13 +206,13 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
                         )}
                         <span>Plain Text</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleCopy('latex')}>
-                        {isCopying === 'latex-optimized' ? (
+                      <DropdownMenuItem onClick={() => handleCopy('markdown')}>
+                        {isCopying === 'markdown-optimized' ? (
                           <Check className="h-4 w-4 mr-2 text-green-500" />
                         ) : (
                           <Code className="h-4 w-4 mr-2" />
                         )}
-                        <span>LaTeX</span>
+                        <span>Markdown</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleCopy('docx')}>
                         {isCopying === 'docx-optimized' ? (
