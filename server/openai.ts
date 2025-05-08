@@ -76,8 +76,8 @@ export async function extractKeywords(jobDescription: string): Promise<string[]>
         keywords.push(...result.Domain_Knowledge);
       }
       
-      // Return unique keywords
-      return [...new Set(keywords)];
+      // Filter to unique keywords 
+      return Array.from(new Set(keywords));
     } catch (parseError) {
       console.error("Error parsing JSON from OpenAI response:", parseError);
       return [];
@@ -129,35 +129,28 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
           role: "system",
           content: 
             "You are a senior résumé strategist who specializes in applicant-tracking-system (ATS) optimization.\n\n" +
+            "CRITICAL INSTRUCTION: PRESERVE THE ORIGINAL RESUME EXACTLY AS PROVIDED. Your task is to enhance it with keywords, NOT restructure or rewrite it completely.\n\n" +
             "OBJECTIVES\n" +
-            "1. Match ≥ 90% of high-priority keywords while staying fact-based.\n" +
-            "2. Strengthen each bullet using the A-R-T pattern (Action verb → Result metric → Tool/Technique).\n" +
-            "3. Keep total résumé length ≤ 2 pages, no graphics or tables.\n" +
-            "4. Maintain the candidate's original chronology and voice.\n" +
-            "5. DO NOT fabricate experience, dates, or credentials.\n\n" +
+            "1. PRESERVE ALL ORIGINAL CONTENT - every section, title, company name, date, and bullet point must remain intact\n" +
+            "2. Only enhance existing content by inserting relevant keywords within it\n" +
+            "3. Match keywords from the job description naturally within existing text\n" +
+            "4. Highlight the keywords you've added or that already exist\n" +
+            "5. DO NOT add new sections, positions, or fabricate any experience\n\n" +
             "IMPORTANT GUIDELINES:\n" +
-            "1. Maintain a professional tone - avoid hyperbolic or overly enthusiastic language\n" +
-            "2. DO NOT use em dashes (—) - use regular hyphens (-) instead\n" +
-            "3. DO NOT add bubbly or unnecessarily flowery descriptors\n" +
-            "4. DO NOT use overly boastful language\n" +
-            "5. Use original spelling/casing for company names and titles\n" +
-            "6. Keep bullets ≤ 22 words; use numerals for all numbers\n" +
-            "7. Jobs ≥ 10 years old: trim to 1-2 bullets\n\n" +
+            "1. DO NOT change the resume structure or rewrite content extensively\n" +
+            "2. DO NOT remove any original content or sections\n" +
+            "3. DO NOT change job titles, company names, dates, or education details\n" +
+            "4. DO NOT add new bullet points or paragraphs that weren't in the original\n" +
+            "5. When highlighting existing keywords, don't change any surrounding text\n\n" +
             "OUTPUT FORMAT:\n" +
-            "Return the optimized CV in HTML format with proper structure, keyword highlighting, and improved content. Format it for BOTH web display AND PDF conversion.\n\n" +
+            "Return the optimized CV in HTML format preserving the exact structure of the original resume, with keywords highlighted.\n\n" +
             "Use these specific HTML elements:\n" +
-            "- For section titles: <h2 class=\"font-display text-lg border-b border-brown/30 pb-2 mb-3\">Title</h2>\n" +
-            "- For sub-sections or positions: <h3 class=\"font-display text-md font-semibold mt-4 mb-1\">Position | Company</h3>\n" +
-            "- For dates/locations: <p class=\"text-xs text-gray-600 mb-2\">Date range | Location</p>\n" +
-            "- For paragraphs: <p class=\"mb-4 text-sm\">Content</p>\n" +
-            "- For lists: <ul class=\"text-sm list-disc pl-4 space-y-1\"><li>Item</li></ul>\n" +
-            "- For metrics and improvements: <span class=\"font-semibold\">30% increase</span>\n" +
+            "- For section titles (exactly as in original): <h2 class=\"font-display text-lg border-b border-brown/30 pb-2 mb-3\">Title</h2>\n" +
+            "- For job titles/positions (exactly as in original): <h3 class=\"font-display text-md font-semibold mt-4 mb-1\">Position | Company</h3>\n" +
+            "- For dates/locations (exactly as in original): <p class=\"text-xs text-gray-600 mb-2\">Date range | Location</p>\n" +
+            "- For paragraphs (preserving all original text): <p class=\"mb-4 text-sm\">Content</p>\n" +
+            "- For lists (preserving all original bullet points): <ul class=\"text-sm list-disc pl-4 space-y-1\"><li>Item</li></ul>\n" +
             "- For keywords: <span class=\"bg-green-100 px-1\">keyword</span>\n\n" +
-            "RESUME STRUCTURE REQUIREMENTS:\n" +
-            "1. Always include clear section headers (Education, Experience, Skills, etc.)\n" +
-            "2. Group content logically under these headers\n" +
-            "3. Format job experiences with company, title, dates all clearly identified\n" +
-            "4. Keep bullet points concise and focused\n\n" +
             "Do NOT include ```html tags or markdown formatting in your response - ONLY return pure HTML",
         },
         {

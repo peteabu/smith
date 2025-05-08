@@ -223,7 +223,7 @@ function createPDF(content: string, format: 'pdf' | 'latex' = 'pdf'): Buffer {
     // More academic/formal style
     sections.forEach(section => {
       doc.font('Helvetica-Bold').fontSize(fontSizes.heading)
-        .text(section.title.toUpperCase(), { underline: true });
+        .text(section.title.toUpperCase());
       doc.moveDown(0.5);
       
       section.content.forEach(item => {
@@ -244,7 +244,7 @@ function createPDF(content: string, format: 'pdf' | 'latex' = 'pdf'): Buffer {
             break;
           case 'list':
             doc.font('Helvetica').fontSize(fontSizes.normal)
-              .text(`  • ${item.text}`, { indent: 10 });
+              .text(`  • ${item.text}`);
             doc.moveDown(0.3);
             break;
         }
@@ -261,9 +261,7 @@ function createPDF(content: string, format: 'pdf' | 'latex' = 'pdf'): Buffer {
       doc.moveDown(0.3);
       
       // Add a divider line
-      doc.moveTo(50, doc.y)
-         .lineTo(doc.page.width - 50, doc.y)
-         .stroke();
+      doc.fontSize(1).text('_'.repeat(80), { align: 'center' });
       doc.moveDown(0.5);
       
       // Process section content
