@@ -115,11 +115,16 @@ export default function Home() {
         <main className="container mx-auto px-4 pb-12 max-w-6xl">
           {/* Workflow Progress Indicator */}
           <div className="mb-8">
-            <div className="flex justify-between items-center mb-2">
+            <div className="flex justify-between items-center mb-3">
               <h2 className="font-display text-xl text-brown-dark">Your Progress</h2>
-              <span className="text-sm text-brown">{calculateProgress()}%</span>
+              <span className="text-sm font-mono text-brown bg-paper px-2 py-1 border border-brown/30">{calculateProgress()}%</span>
             </div>
-            <Progress value={calculateProgress()} className="h-2" />
+            <div className="relative h-2 bg-paper-texture border border-brown/30">
+              <div 
+                className="absolute top-0 left-0 h-full bg-brown/40 transition-all duration-300 ease-in-out"
+                style={{ width: `${calculateProgress()}%` }}
+              />
+            </div>
           </div>
           
           {/* Tabbed Workflow Interface */}
@@ -128,46 +133,69 @@ export default function Home() {
             onValueChange={(value) => setActiveStep(value as WorkflowStep)}
             className="space-y-6"
           >
-            <TabsList className="w-full bg-paper-texture justify-between mb-6 h-auto p-1 flex-wrap">
-              <TabsTrigger 
-                value={WorkflowStep.UPLOAD_CV}
-                className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-white flex-grow"
-              >
-                <FileText className="h-4 w-4" />
-                <span className={isMobile ? "hidden" : "block"}>Resume</span>
-                <span className="text-xs bg-brown text-white rounded-full h-5 w-5 flex items-center justify-center">1</span>
-              </TabsTrigger>
-              
-              <TabsTrigger 
-                value={WorkflowStep.ANALYZE_JOB}
-                disabled={!cvId}
-                className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-white flex-grow"
-              >
-                <Edit className="h-4 w-4" />
-                <span className={isMobile ? "hidden" : "block"}>Job Description</span>
-                <span className="text-xs bg-brown text-white rounded-full h-5 w-5 flex items-center justify-center">2</span>
-              </TabsTrigger>
-              
-              <TabsTrigger 
-                value={WorkflowStep.OPTIMIZE}
-                disabled={!jobAnalysis}
-                className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-white flex-grow"
-              >
-                <LineChart className="h-4 w-4" />
-                <span className={isMobile ? "hidden" : "block"}>Analysis</span>
-                <span className="text-xs bg-brown text-white rounded-full h-5 w-5 flex items-center justify-center">3</span>
-              </TabsTrigger>
-              
-              <TabsTrigger 
-                value={WorkflowStep.RESULTS}
-                disabled={!optimizedCV}
-                className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-white flex-grow"
-              >
-                <Download className="h-4 w-4" />
-                <span className={isMobile ? "hidden" : "block"}>Results</span>
-                <span className="text-xs bg-brown text-white rounded-full h-5 w-5 flex items-center justify-center">4</span>
-              </TabsTrigger>
-            </TabsList>
+            <div className="mb-6 relative">
+              <div className="absolute top-0 left-0 w-full h-full bg-paper -z-10 paper-shadow"></div>
+              <div className="flex flex-wrap w-full font-mono text-sm border-b border-brown/30">
+                <button
+                  type="button"
+                  onClick={() => setActiveStep(WorkflowStep.UPLOAD_CV)}
+                  className={`flex items-center gap-2 py-3 px-4 flex-grow border-r border-brown/30 ${
+                    activeStep === WorkflowStep.UPLOAD_CV 
+                      ? 'bg-white text-brown-dark font-bold' 
+                      : 'text-brown hover:bg-white/50'
+                  }`}
+                >
+                  <FileText className="h-4 w-4" />
+                  <span className={isMobile ? "hidden" : "block"}>Resume</span>
+                  <span className="ml-1 text-xs border border-brown text-brown h-5 w-5 flex items-center justify-center">1</span>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => cvId && setActiveStep(WorkflowStep.ANALYZE_JOB)}
+                  disabled={!cvId}
+                  className={`flex items-center gap-2 py-3 px-4 flex-grow border-r border-brown/30 ${
+                    activeStep === WorkflowStep.ANALYZE_JOB 
+                      ? 'bg-white text-brown-dark font-bold' 
+                      : 'text-brown hover:bg-white/50'
+                  } ${!cvId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <Edit className="h-4 w-4" />
+                  <span className={isMobile ? "hidden" : "block"}>Job Description</span>
+                  <span className="ml-1 text-xs border border-brown text-brown h-5 w-5 flex items-center justify-center">2</span>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => jobAnalysis && setActiveStep(WorkflowStep.OPTIMIZE)}
+                  disabled={!jobAnalysis}
+                  className={`flex items-center gap-2 py-3 px-4 flex-grow border-r border-brown/30 ${
+                    activeStep === WorkflowStep.OPTIMIZE 
+                      ? 'bg-white text-brown-dark font-bold' 
+                      : 'text-brown hover:bg-white/50'
+                  } ${!jobAnalysis ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <LineChart className="h-4 w-4" />
+                  <span className={isMobile ? "hidden" : "block"}>Analysis</span>
+                  <span className="ml-1 text-xs border border-brown text-brown h-5 w-5 flex items-center justify-center">3</span>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => optimizedCV && setActiveStep(WorkflowStep.RESULTS)}
+                  disabled={!optimizedCV}
+                  className={`flex items-center gap-2 py-3 px-4 flex-grow ${
+                    activeStep === WorkflowStep.RESULTS 
+                      ? 'bg-white text-brown-dark font-bold' 
+                      : 'text-brown hover:bg-white/50'
+                  } ${!optimizedCV ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <Download className="h-4 w-4" />
+                  <span className={isMobile ? "hidden" : "block"}>Results</span>
+                  <span className="ml-1 text-xs border border-brown text-brown h-5 w-5 flex items-center justify-center">4</span>
+                </button>
+              </div>
+            </div>
             
             {/* Step 1: Upload CV */}
             <TabsContent value={WorkflowStep.UPLOAD_CV} className="space-y-6 mt-0">
