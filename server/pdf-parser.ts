@@ -5,6 +5,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { PDFDocument } from 'pdf-lib';
+// We'll use dynamic import for pdf-parse
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let pdfParse: any = null;
 
 export interface PDFData {
   text: string;
@@ -30,31 +33,70 @@ export default async function parsePdf(buffer: Buffer): Promise<PDFData> {
       // Try to extract text using multiple approaches
       let extractedText = '';
       
-      // Try approach 1: Use the pdftotext utility if available (commonly found on Linux)
+      // Try initial approach with pdf-parse (works well with LaTeX-generated PDFs)
       try {
-        const result = spawnSync('pdftotext', [tempFilePath, '-']);
-        if (result.status === 0 && result.stdout) {
-          extractedText = result.stdout.toString();
-          console.log("Extracted with pdftotext utility");
+        // Dynamically import pdf-parse
+        if (!pdfParse) {
+          const pdfParseModule = await import('pdf-parse');
+          pdfParse = pdfParseModule.default;
+        }
+        
+        const data = await pdfParse(buffer, {
+          // Simply use default PDF.js extraction for better LaTeX compatibility
+          max: 0 // Process all pages
+        });
+        
+        if (data && data.text && data.text.trim()) {
+          extractedText = data.text;
+          console.log("Extracted with pdf-parse library");
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        console.log("pdftotext not available:", errorMessage);
+        console.error("Error using pdf-parse:", error);
       }
       
-      // If empty, try approach 2: Read PDF as string and do basic extraction
+      // Try approach 1: Use the pdftotext utility if available (commonly found on Linux)
+      if (!extractedText.trim()) {
+        try {
+          const result = spawnSync('pdftotext', [tempFilePath, '-']);
+          if (result.status === 0 && result.stdout) {
+            extractedText = result.stdout.toString();
+            console.log("Extracted with pdftotext utility");
+          }
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.log("pdftotext not available:", errorMessage);
+        }
+      }
+      
+      // If empty, try approach 2: Read PDF as string and use LaTeX-focused extraction
       if (!extractedText.trim()) {
         const pdfContent = buffer.toString('utf8', 0, Math.min(buffer.length, 100000));
         
-        // Extract text by finding patterns that look like text content
-        const textMatches = pdfContent.match(/\\?[\\(]([^\\)]+)\\?[\\)]/g) || [];
+        // Special patterns for LaTeX-generated PDFs
+        const latexPatterns = [
+          // Text pattern in LaTeX PDFs - more generous pattern
+          /\(([^)]{2,})\)/g,
+          // Tj pattern in PDF content
+          /\([^)]+\)\s*Tj/g,
+          // BT...ET text blocks (Beginning/End Text) - using pre-ES2018 compatible regex
+          /BT\s*([\s\S]*?)\s*ET/g
+        ];
         
-        const extractedParts = textMatches
-          .map(match => match.replace(/\\?[\\()]|TJ/g, ''))
-          .filter(part => part.trim().length > 0 && /[a-zA-Z0-9]/.test(part));
+        let extractedParts: string[] = [];
+        
+        for (const pattern of latexPatterns) {
+          const matches = pdfContent.match(pattern) || [];
+          const parts = matches
+            .map(match => match.replace(/\(|\)|Tj|BT|ET/g, ''))
+            .filter(part => part.trim().length > 0 && /[a-zA-Z0-9]/.test(part));
           
-        extractedText = extractedParts.join(' ');
-        console.log("Extracted with basic pattern matching");
+          extractedParts = [...extractedParts, ...parts];
+        }
+        
+        if (extractedParts.length > 0) {
+          extractedText = extractedParts.join(' ');
+          console.log("Extracted with LaTeX-focused pattern matching");
+        }
       }
       
       // Try approach 3: Use pdf-lib to extract text
