@@ -51,7 +51,7 @@ export async function saveFile(
     
     // In production, you'd return a CDN URL or signed URL
     // For development, we'll just use a local path
-    const url = `/api/files/${safeFilename}`;
+    const url = `/uploads/${safeFilename}`;
     
     return {
       url,

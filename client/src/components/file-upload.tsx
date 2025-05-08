@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X, FileText } from "lucide-react";
-import { fileToBase64, isValidFileType } from "@/lib/utils";
+import { isValidFileType } from "@/lib/utils";
 import { uploadCV } from "@/lib/cv-analyzer";
 import { useToast } from "@/hooks/use-toast";
 
@@ -31,8 +31,8 @@ export function FileUpload({ onCvUploaded }: FileUploadProps) {
     setIsUploading(true);
 
     try {
-      const base64Content = await fileToBase64(selectedFile);
-      const result = await uploadCV(selectedFile, base64Content);
+      // Use the updated uploadCV that now handles FormData directly
+      const result = await uploadCV(selectedFile, "");
       onCvUploaded(result.id, result.fileName);
       toast({
         title: "CV uploaded",
