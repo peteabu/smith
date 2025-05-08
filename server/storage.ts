@@ -24,7 +24,7 @@ export interface IStorage {
   // Optimized CV methods
   createOptimizedCV(optimizedCV: InsertOptimizedCV): Promise<OptimizedCV>;
   getOptimizedCV(id: number): Promise<OptimizedCV | undefined>;
-  getOptimizedCVByJobAndDocument(jobId: number, cvId: number): Promise<OptimizedCV | undefined>;
+  getOptimizedCVByJobAndDocument(jobId: number | null, cvId: number | null): Promise<OptimizedCV | undefined>;
 }
 
 // Database storage implementation
@@ -122,7 +122,12 @@ export class DatabaseStorage implements IStorage {
     return optCV || undefined;
   }
   
-  async getOptimizedCVByJobAndDocument(jobId: number, cvId: number): Promise<OptimizedCV | undefined> {
+  async getOptimizedCVByJobAndDocument(jobId: number | null, cvId: number | null): Promise<OptimizedCV | undefined> {
+    // Return undefined if either ID is null
+    if (jobId === null || cvId === null) {
+      return undefined;
+    }
+    
     const [optCV] = await db
       .select()
       .from(optimizedCVs)

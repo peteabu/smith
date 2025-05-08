@@ -161,4 +161,53 @@
   .font-serif {
     font-family: 'Source Serif Pro', serif;
   }
+  
+  /* Resume styling */
+  .optimized-resume h1,
+  .optimized-resume h2,
+  .optimized-resume h3 {
+    font-family: 'Playfair Display', serif;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: #5D4E3C;
+    font-weight: 600;
+  }
+  
+  .optimized-resume h2 {
+    font-size: 1.25rem;
+    border-bottom: 1px solid rgba(93, 78, 60, 0.3);
+    padding-bottom: 0.5rem;
+  }
+  
+  .optimized-resume h3 {
+    font-size: 1.1rem;
+  }
+  
+  .optimized-resume p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+  }
+  
+  .optimized-resume ul {
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+    list-style-type: disc;
+  }
+  
+  .optimized-resume li {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+  }
+  
+  .optimized-resume .bg-green-100 {
+    background-color: rgba(134, 239, 172, 0.25);
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+  
+  .optimized-resume .font-semibold {
+    font-weight: 600;
+  }
 }

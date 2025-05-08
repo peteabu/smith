@@ -109,10 +109,15 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
             </p>
           </div>
         ) : (
-          <div 
-            className="optimized-resume prose max-w-none" 
-            dangerouslySetInnerHTML={{ __html: optimizedCV.optimizedContent }}
-          />
+          <div className="optimized-resume prose prose-headings:my-4 prose-p:my-2 prose-p:leading-relaxed prose-li:my-1 max-w-none">
+            {optimizedCV.optimizedContent ? (
+              <div dangerouslySetInnerHTML={{ __html: optimizedCV.optimizedContent }} />
+            ) : (
+              <div className="p-4 text-center text-brown-dark">
+                <p>No optimized content available. Please try again with a different CV or job description.</p>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
