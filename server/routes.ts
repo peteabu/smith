@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
@@ -15,6 +15,7 @@ import * as openaiService from "./openai";
 import filesRouter from "./routes/files";
 import { base64ToBuffer, extractTextFromPDF } from "./routes/utils";
 import pdfParse from "./pdf-parser";
+import { Server as SocketIOServer } from "socket.io";
 
 // Natural language processing tokenizer
 const tokenizer = new natural.WordTokenizer();

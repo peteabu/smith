@@ -39,7 +39,8 @@ async function performWebSearch(query: string, maxResults: number = 5): Promise<
           content: `Search request: ${query}`
         }
       ],
-      response_format: { type: "json_object" }
+      response_format: { type: "json_object" },
+      max_tokens: 1500  // Limit token usage for faster response
     });
     
     const responseContent = searchResponse.choices[0].message.content || "{}";
