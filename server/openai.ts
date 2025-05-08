@@ -96,9 +96,32 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
   matchRate: number;
 }> {
   try {
+    // Log the first 300 characters of input to debug extraction issues
+    console.log("Original CV content (first 300 chars):", originalCV.substring(0, 300));
+    
     if (!process.env.OPENAI_API_KEY) {
       // Return the original CV if no API key
       return fallbackOptimization(originalCV, keywords);
+    }
+
+    // If the original CV is empty or illegible garbage, return error content
+    if (!originalCV || originalCV.trim().length < 100 || /^[^a-zA-Z0-9]*$/.test(originalCV)) {
+      console.error("CV content is empty, too short, or contains no alphanumeric characters");
+      return {
+        optimizedContent: `<div class="p-4 bg-red-50 text-red-700 rounded border border-red-200">
+          <h2 class="text-xl font-bold mb-2">Error Processing Your Resume</h2>
+          <p>We couldn't properly extract the text from your PDF file. This can happen when:</p>
+          <ul class="list-disc pl-6 mt-2 space-y-1">
+            <li>The PDF contains only scanned images without text</li>
+            <li>The PDF has security restrictions that prevent text extraction</li>
+            <li>The PDF uses unusual fonts or encoding</li>
+          </ul>
+          <p class="mt-3">Please try uploading a different version of your resume where text can be selected and copied.</p>
+        </div>`,
+        matchingKeywords: [],
+        missingKeywords: keywords || [],
+        matchRate: 0
+      };
     }
 
     // Find which keywords are present in the CV
@@ -122,89 +145,108 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
       ? Math.round((matchingKeywords.length / keywordsArray.length) * 100)
       : 0;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: 
-            "You are a senior résumé strategist who specializes in applicant-tracking-system (ATS) optimization.\n\n" +
-            "CRITICAL INSTRUCTION: PRESERVE THE ORIGINAL RESUME EXACTLY AS PROVIDED. Your task is to enhance it with keywords, NOT restructure or rewrite it completely.\n\n" +
-            "OBJECTIVES\n" +
-            "1. PRESERVE ALL ORIGINAL CONTENT - every section, title, company name, date, and bullet point must remain intact\n" +
-            "2. Only enhance existing content by inserting relevant keywords within it\n" +
-            "3. Match keywords from the job description naturally within existing text\n" +
-            "4. Highlight the keywords you've added or that already exist\n" +
-            "5. DO NOT add new sections, positions, or fabricate any experience\n\n" +
-            "IMPORTANT GUIDELINES:\n" +
-            "1. DO NOT change the resume structure or rewrite content extensively\n" +
-            "2. DO NOT remove any original content or sections\n" +
-            "3. DO NOT change job titles, company names, dates, or education details\n" +
-            "4. DO NOT add new bullet points or paragraphs that weren't in the original\n" +
-            "5. When highlighting existing keywords, don't change any surrounding text\n\n" +
-            "OUTPUT FORMAT:\n" +
-            "Return the optimized CV in HTML format preserving the exact structure of the original resume, with keywords highlighted.\n\n" +
-            "Use these specific HTML elements:\n" +
-            "- For section titles (exactly as in original): <h2 class=\"font-display text-lg border-b border-brown/30 pb-2 mb-3\">Title</h2>\n" +
-            "- For job titles/positions (exactly as in original): <h3 class=\"font-display text-md font-semibold mt-4 mb-1\">Position | Company</h3>\n" +
-            "- For dates/locations (exactly as in original): <p class=\"text-xs text-gray-600 mb-2\">Date range | Location</p>\n" +
-            "- For paragraphs (preserving all original text): <p class=\"mb-4 text-sm\">Content</p>\n" +
-            "- For lists (preserving all original bullet points): <ul class=\"text-sm list-disc pl-4 space-y-1\"><li>Item</li></ul>\n" +
-            "- For keywords: <span class=\"bg-green-100 px-1\">keyword</span>\n\n" +
-            "Do NOT include ```html tags or markdown formatting in your response - ONLY return pure HTML",
-        },
-        {
-          role: "user",
-          content: `JOB_DESCRIPTION: I've analyzed this job description and extracted keywords.\n\nORIGINAL_RESUME:\n${originalCV}\n\nKEYWORD_JSON:\n{\n  "keywords": [${keywordsArray.map(k => `"${k}"`).join(", ")}],\n  "matching_keywords": [${matchingKeywords.map(k => `"${k}"`).join(", ")}],\n  "missing_keywords": [${missingKeywords.map(k => `"${k}"`).join(", ")}]\n}\n\nPlease optimize my resume to incorporate these keywords naturally where appropriate, especially the missing ones, while maintaining factual accuracy.`,
-        },
-      ],
-    });
-
-    // Get the optimized content and clean it up
-    let optimizedContent = response.choices[0].message.content || originalCV;
+    // Convert the resume text to HTML with minimal formatting
+    // First, split the resume into meaningful sections
+    const htmlParts: string[] = [];
+    const lines = originalCV.split('\n');
     
-    // Clean up any markdown formatting that might have been added
-    optimizedContent = optimizedContent
-      .replace(/```html/g, '')
-      .replace(/```/g, '')
-      .trim();
-      
-    // Remove any full HTML document structure if present
-    optimizedContent = optimizedContent
-      .replace(/<!DOCTYPE.*?>/i, '')
-      .replace(/<html.*?>[\s\S]*?<head>[\s\S]*?<\/head>[\s\S]*?<body>/i, '')
-      .replace(/<\/body>[\s\S]*?<\/html>/i, '');
-      
-    // Ensure proper section headings
-    if (!optimizedContent.includes('<h')) {
-      // If no headings at all, add some basic structure
-      const parts = optimizedContent.split('\n\n').filter(p => p.trim());
-      
-      // Reset content and build structured version
-      optimizedContent = '';
-      
-      // Look for potential sections
-      const sectionKeywords = ['experience', 'education', 'skills', 'profile', 'summary', 'objective', 'projects'];
-      let inSection = false;
-      
-      parts.forEach(part => {
-        const partLower = part.toLowerCase();
-        const isSectionHeader = sectionKeywords.some(keyword => partLower.includes(keyword)) && 
-                              part.length < 50;
-        
-        if (isSectionHeader) {
-          optimizedContent += `<h2 class="font-display text-lg border-b border-brown/30 pb-2 mb-3">${part}</h2>\n\n`;
-          inSection = true;
-        } else if (part.includes('•') || part.includes('-')) {
-          // Convert bullet point text to list
-          const items = part.split(/\n[•-]\s+/).filter(item => item.trim());
-          const listItems = items.map(item => `<li>${item.trim()}</li>`).join('\n');
-          optimizedContent += `<ul class="text-sm list-disc pl-4 space-y-1">${listItems}</ul>\n\n`;
-        } else {
-          optimizedContent += `<p class="mb-4 text-sm">${part}</p>\n\n`;
+    let currentParagraph: string[] = [];
+    let currentList: string[] = [];
+
+    // Function to add current paragraph to HTML parts
+    const addParagraph = () => {
+      if (currentParagraph.length > 0) {
+        const paragraph = currentParagraph.join(' ').trim();
+        if (paragraph) {
+          // Check if it's likely a header/title by checking:
+          // 1. It's short (less than 50 chars)
+          // 2. It's all caps or ends with colon
+          // 3. It contains common section keywords
+          const headerKeywords = ['experience', 'education', 'skills', 'objective', 'summary', 'contact', 'projects'];
+          const isHeader = 
+            (paragraph.length < 50 && 
+             (paragraph.toUpperCase() === paragraph || paragraph.endsWith(':') ||
+              headerKeywords.some(k => paragraph.toLowerCase().includes(k))));
+          
+          if (isHeader) {
+            htmlParts.push(`<h2 class="font-display text-lg border-b border-brown/30 pb-2 mb-3">${paragraph}</h2>`);
+          } else {
+            // Check if it looks like a job title or position
+            const positionMarkers = ['manager', 'engineer', 'developer', 'director', 'specialist', 'analyst'];
+            const isPosition = paragraph.length < 80 && 
+                              (positionMarkers.some(m => paragraph.toLowerCase().includes(m)) || 
+                               /\d{4}\s*(-|–|to)\s*\d{4}|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(paragraph));
+            
+            if (isPosition) {
+              htmlParts.push(`<h3 class="font-display text-md font-semibold mt-4 mb-1">${paragraph}</h3>`);
+            } else {
+              // Detect if it looks like a date range
+              const isDateOrLocation = paragraph.length < 60 && 
+                                     /\d{4}\s*(-|–|to)\s*\d{4}|present|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(paragraph);
+              
+              if (isDateOrLocation) {
+                htmlParts.push(`<p class="text-xs text-gray-600 mb-2">${paragraph}</p>`);
+              } else {
+                htmlParts.push(`<p class="mb-4 text-sm">${paragraph}</p>`);
+              }
+            }
+          }
         }
-      });
+        currentParagraph = [];
+      }
+    };
+    
+    // Function to add current list to HTML parts
+    const addList = () => {
+      if (currentList.length > 0) {
+        const listItems = currentList.map(item => `<li>${item.trim().replace(/^[•\-]\s*/, '')}</li>`).join('');
+        htmlParts.push(`<ul class="text-sm list-disc pl-4 space-y-1">${listItems}</ul>`);
+        currentList = [];
+      }
+    };
+
+    // Process each line
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Skip empty lines
+      if (!line) {
+        // Empty line could indicate paragraph break
+        addParagraph();
+        addList();
+        continue;
+      }
+      
+      // Check if it's a list item (starts with bullet or dash)
+      if (line.startsWith('•') || line.startsWith('-')) {
+        // If we have a paragraph in progress, add it first
+        addParagraph();
+        currentList.push(line);
+      } else {
+        // If we have a list in progress, add it first
+        addList();
+        
+        // Add to current paragraph
+        currentParagraph.push(line);
+      }
     }
+    
+    // Add any remaining content
+    addParagraph();
+    addList();
+    
+    // Join all HTML parts
+    let formattedHtml = htmlParts.join('\n');
+    
+    // Highlight matching keywords in the HTML
+    keywordsArray.forEach(keyword => {
+      // Create a case-insensitive regular expression that matches whole words
+      const regex = new RegExp(`(\\b${keyword}\\b)`, 'gi');
+      formattedHtml = formattedHtml.replace(regex, '<span class="bg-green-100 px-1">$1</span>');
+    });
+    
+    // Now wrap everything in a container
+    const optimizedContent = `<div class="resume-content">${formattedHtml}</div>`;
 
     return {
       optimizedContent,
@@ -213,7 +255,7 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
       matchRate
     };
   } catch (error) {
-    console.error("Error using OpenAI for CV optimization:", error);
+    console.error("Error optimizing CV:", error);
     // Return a basic optimization as fallback
     return fallbackOptimization(originalCV, keywords);
   }
