@@ -1,9 +1,10 @@
-// Custom PDF text extraction - no external dependencies
+// Custom PDF text extraction with multiple methods
 import { spawnSync } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { PDFDocument } from 'pdf-lib';
 
 export interface PDFData {
   text: string;
@@ -56,6 +57,37 @@ export default async function parsePdf(buffer: Buffer): Promise<PDFData> {
         console.log("Extracted with basic pattern matching");
       }
       
+      // Try approach 3: Use pdf-lib to extract text
+      if (!extractedText.trim()) {
+        try {
+          const pdfDoc = await PDFDocument.load(buffer, { ignoreEncryption: true });
+          
+          const numPages = pdfDoc.getPageCount();
+          console.log(`PDF has ${numPages} pages`);
+          
+          // We can't directly extract text with pdf-lib, but we can get metadata
+          const title = pdfDoc.getTitle() || '';
+          const author = pdfDoc.getAuthor() || '';
+          const subject = pdfDoc.getSubject() || '';
+          const keywords = pdfDoc.getKeywords() || '';
+          
+          // Combine metadata to at least get some information
+          const metadataText = [
+            title ? `Title: ${title}` : '',
+            author ? `Author: ${author}` : '',
+            subject ? `Subject: ${subject}` : '',
+            keywords ? `Keywords: ${keywords}` : '',
+          ].filter(Boolean).join('\n');
+          
+          if (metadataText.trim()) {
+            extractedText = metadataText;
+            console.log("Extracted PDF metadata");
+          }
+        } catch (error) {
+          console.error("Error using pdf-lib:", error);
+        }
+      }
+      
       // If still empty, use a fallback approach
       if (!extractedText.trim()) {
         // Attempt to extract any strings of printable ASCII characters from the buffer
@@ -81,8 +113,20 @@ export default async function parsePdf(buffer: Buffer): Promise<PDFData> {
       
       console.log("Extracted text from PDF (sample):", extractedText.substring(0, 200));
       
+      // If we couldn't extract any meaningful text, provide a detailed error message
+      if (!extractedText || extractedText.trim().length < 100 || !/[a-zA-Z]{5,}/.test(extractedText)) {
+        console.error("Failed to extract meaningful text from PDF");
+        return {
+          text: "ERROR: Unable to extract text content from your PDF. This might be because:\n\n" +
+                "1. The PDF contains scanned images without embedded text\n" +
+                "2. The PDF has security restrictions or is password-protected\n" +
+                "3. The PDF uses custom fonts or encoding\n\n" +
+                "Please try uploading a different PDF where you can select and copy text content."
+        };
+      }
+
       return {
-        text: extractedText || "Unable to extract text from this PDF. The file may be scan-only or contain security restrictions."
+        text: extractedText
       };
     } finally {
       // Clean up temp file

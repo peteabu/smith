@@ -104,18 +104,30 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
       return fallbackOptimization(originalCV, keywords);
     }
 
-    // If the original CV is empty or illegible garbage, return error content
-    if (!originalCV || originalCV.trim().length < 100 || /^[^a-zA-Z0-9]*$/.test(originalCV)) {
-      console.error("CV content is empty, too short, or contains no alphanumeric characters");
+    // Check for error messages from PDF extraction 
+    if (!originalCV || 
+        originalCV.trim().length < 100 || 
+        /^[^a-zA-Z0-9]*$/.test(originalCV) ||
+        originalCV.includes("ERROR:") || 
+        originalCV.includes("Unable to extract text")) {
+      
+      console.error("CV content is problematic:", originalCV.substring(0, 200));
+      
+      // Use the error message from the PDF parser if available, or create our own
+      const errorMessage = originalCV.includes("ERROR:") 
+        ? originalCV.replace("ERROR:", "").trim() 
+        : "We couldn't properly extract the text from your PDF file. Please try uploading a different version where text can be selected and copied.";
+      
       return {
         optimizedContent: `<div class="p-4 bg-red-50 text-red-700 rounded border border-red-200">
           <h2 class="text-xl font-bold mb-2">Error Processing Your Resume</h2>
-          <p>We couldn't properly extract the text from your PDF file. This can happen when:</p>
-          <ul class="list-disc pl-6 mt-2 space-y-1">
-            <li>The PDF contains only scanned images without text</li>
-            <li>The PDF has security restrictions that prevent text extraction</li>
-            <li>The PDF uses unusual fonts or encoding</li>
-          </ul>
+          <p>${errorMessage.includes("\n") ? errorMessage.split("\n")[0] : errorMessage}</p>
+          ${errorMessage.includes("\n") ? 
+            `<ul class="list-disc pl-6 mt-2 space-y-1">
+              ${errorMessage.split("\n").filter((line, i) => i > 0 && line.trim()).map(line => 
+                `<li>${line.replace(/^\d+\.\s*/, '')}</li>`
+              ).join('')}
+            </ul>` : ''}
           <p class="mt-3">Please try uploading a different version of your resume where text can be selected and copied.</p>
         </div>`,
         matchingKeywords: [],
