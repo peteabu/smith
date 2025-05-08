@@ -58,15 +58,15 @@ export function KeywordAnalysis({ analysis, optimization, showFull = false }: Ke
     }
   };
 
-  return (
-    <div className={`${showFull ? '' : 'bg-white rounded-lg p-6 paper-shadow'}`}>
-      <h2 className="font-display text-lg mb-3">Keyword Analysis</h2>
-      <p className="text-sm text-brown mb-4">
-        {keywords.length} key terms identified through multi-step analysis
-      </p>
+  // Full display mode (used in the results step)
+  if (showFull) {
+    return (
+      <div>
+        <h2 className="font-display text-lg mb-3">Keyword Analysis</h2>
+        <p className="text-sm text-brown mb-4">
+          {keywords.length} key terms identified through multi-step analysis
+        </p>
 
-      {/* Compact or full display based on showFull prop */}
-      {showFull ? (
         // Full display shows a summary view with key metrics
         <div className="space-y-6">
           <div className="flex flex-wrap gap-2 mb-4">
@@ -120,8 +120,17 @@ export function KeywordAnalysis({ analysis, optimization, showFull = false }: Ke
             </div>
           )}
         </div>
-      ) : (
-        // Regular tabbed display
+      </div>
+    );
+  }
+  
+  // Regular tabbed display (used in the analysis step)
+  return (
+    <div className="bg-white rounded-lg p-6 paper-shadow">
+      <h2 className="font-display text-lg mb-3">Keyword Analysis</h2>
+      <p className="text-sm text-brown mb-4">
+        {keywords.length} key terms identified through multi-step analysis
+      </p>
         <Tabs defaultValue="keywords" value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid grid-cols-5 mb-4">
             <TabsTrigger value="keywords">Keywords</TabsTrigger>
