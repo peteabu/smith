@@ -382,26 +382,35 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
     }
     
     // Step 6: Web Research for Recruitment Practices
-    result.analysisSteps![5].status = "in-progress";
+    updateStepStatus(result.analysisSteps!, 5, 'in-progress');
     
     // Perform web search for recruitment practices
     const recruitmentSearchQuery = `what recruiters look for in ${jobTitle} candidates ${industry} industry hiring practices`;
     const recruitmentSearchResults = await performWebSearch(recruitmentSearchQuery);
     
     // Store the search results
+    result.webSearchResults!.recruitment = recruitmentSearchResults;
+    
     if (recruitmentSearchResults.length > 0) {
-      result.webSearchResults!.recruitment = recruitmentSearchResults;
       const sourceUrls = recruitmentSearchResults.map(r => r.url);
-      result.analysisSteps![5].sources = sourceUrls;
-      result.analysisSteps![5].result = `Found ${recruitmentSearchResults.length} relevant sources about recruitment practices.`;
+      updateStepStatus(
+        result.analysisSteps!, 
+        5, 
+        'completed', 
+        `Found ${recruitmentSearchResults.length} relevant sources about recruitment practices.`,
+        sourceUrls
+      );
     } else {
-      result.analysisSteps![5].result = "No web search results found for recruitment research.";
+      updateStepStatus(
+        result.analysisSteps!, 
+        5, 
+        'completed', 
+        "No web search results found for recruitment research."
+      );
     }
     
-    result.analysisSteps![5].status = "completed";
-    
     // Step 7: Recruitment Insights with web search results
-    result.analysisSteps![6].status = "in-progress";
+    updateStepStatus(result.analysisSteps!, 6, 'in-progress');
     
     // Format search results for the prompt
     const recruitmentSearchContent = recruitmentSearchResults.map((result, index) => 
@@ -432,30 +441,38 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
 
     const recruitmentInsights = recruitmentInsightsResponse.choices[0].message.content || "";
     result.recruitmentInsights = recruitmentInsights;
-    result.analysisSteps![6].status = "completed";
-    result.analysisSteps![6].result = recruitmentInsights;
+    updateStepStatus(result.analysisSteps!, 6, 'completed', recruitmentInsights);
     
     // Step 8: Web Research for ATS Systems
-    result.analysisSteps![7].status = "in-progress";
+    updateStepStatus(result.analysisSteps!, 7, 'in-progress');
     
     // Perform web search for ATS systems
     const atsSearchQuery = `ATS applicant tracking system optimization for ${jobTitle} resume tips 2024`;
     const atsSearchResults = await performWebSearch(atsSearchQuery);
     
     // Store the search results
+    result.webSearchResults!.ats = atsSearchResults;
+    
     if (atsSearchResults.length > 0) {
-      result.webSearchResults!.ats = atsSearchResults;
       const sourceUrls = atsSearchResults.map(r => r.url);
-      result.analysisSteps![7].sources = sourceUrls;
-      result.analysisSteps![7].result = `Found ${atsSearchResults.length} relevant sources about ATS optimization.`;
+      updateStepStatus(
+        result.analysisSteps!, 
+        7, 
+        'completed', 
+        `Found ${atsSearchResults.length} relevant sources about ATS optimization.`,
+        sourceUrls
+      );
     } else {
-      result.analysisSteps![7].result = "No web search results found for ATS research.";
+      updateStepStatus(
+        result.analysisSteps!, 
+        7, 
+        'completed', 
+        "No web search results found for ATS research."
+      );
     }
     
-    result.analysisSteps![7].status = "completed";
-    
     // Step 9: ATS Optimization with web search results
-    result.analysisSteps![8].status = "in-progress";
+    updateStepStatus(result.analysisSteps!, 8, 'in-progress');
     
     // Format search results for the prompt
     const atsSearchContent = atsSearchResults.map((result, index) => 
@@ -486,11 +503,10 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
 
     const atsFindings = atsOptimizationResponse.choices[0].message.content || "";
     result.atsFindings = atsFindings;
-    result.analysisSteps![8].status = "completed";
-    result.analysisSteps![8].result = atsFindings;
+    updateStepStatus(result.analysisSteps!, 8, 'completed', atsFindings);
     
     // Step 10: Final Keyword Extraction
-    result.analysisSteps![9].status = "in-progress";
+    updateStepStatus(result.analysisSteps!, 9, 'in-progress');
     
     // Combine web search insights for the final extraction
     const webInsights = [
@@ -535,14 +551,22 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
     try {
       const keywordData = JSON.parse(keywordExtractionContent);
       result.keywords = keywordData.keywords || [];
-      result.analysisSteps![9].status = "completed";
-      result.analysisSteps![9].result = `Extracted ${result.keywords.length} high-value keywords based on comprehensive research.`;
+      updateStepStatus(
+        result.analysisSteps!, 
+        9, 
+        'completed', 
+        `Extracted ${result.keywords.length} high-value keywords based on comprehensive research.`
+      );
     } catch (error) {
       console.error("Error parsing keyword extraction JSON:", error);
       // Fallback to local extraction
       result.keywords = extractKeywordsLocally(jobDescription);
-      result.analysisSteps![9].status = "completed";
-      result.analysisSteps![9].result = "Error in final keyword extraction, used fallback method.";
+      updateStepStatus(
+        result.analysisSteps!, 
+        9, 
+        'completed', 
+        "Error in final keyword extraction, used fallback method."
+      );
     }
 
     return result;
