@@ -79,15 +79,23 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
     setIsCopying(copyId);
     
     try {
-      // Fetch the content directly from the export endpoint
-      const response = await fetch(`/api/cv/export/${optimizedCV.id}?format=${format}${useOriginal ? '&original=true' : ''}`);
+      let content = '';
       
-      if (!response.ok) {
-        throw new Error(`Failed to fetch content: ${response.status}`);
+      // If format is markdown and we have the markdownContent directly, use it
+      if (format === 'markdown' && optimizedCV.markdownContent && !useOriginal) {
+        content = optimizedCV.markdownContent;
+        console.log("Using direct markdown content for copying");
+      } else {
+        // Otherwise fetch from the export endpoint
+        const response = await fetch(`/api/cv/export/${optimizedCV.id}?format=${format}${useOriginal ? '&original=true' : ''}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch content: ${response.status}`);
+        }
+        
+        content = await response.text();
+        console.log("Content fetched for copying from API:", content.substring(0, 100) + "...");
       }
-      
-      const content = await response.text();
-      console.log("Content fetched for copying:", content.substring(0, 100) + "...");
       
       // Log the content to make sure we're getting it
       if (content.length > 100) {

@@ -183,6 +183,7 @@ function optimizeCV(cvText: string, keywords: string[]): {
   matchingKeywords: string[];
   missingKeywords: string[];
   matchRate: number;
+  markdownContent?: string;
 } {
   // Find which keywords are present in the CV
   const cvLower = cvText.toLowerCase();
@@ -237,7 +238,8 @@ function optimizeCV(cvText: string, keywords: string[]): {
     optimizedContent,
     matchingKeywords,
     missingKeywords,
-    matchRate
+    matchRate,
+    markdownContent: cvText // Use the original CV text as markdown content
   };
 }
 
@@ -509,7 +511,8 @@ export async function registerRoutes(app: Express): Promise<void> {
           optimizedContent: existingOptimizedCV.content,
           matchRate: existingOptimizedCV.matchRate,
           matchingKeywords,
-          missingKeywords
+          missingKeywords,
+          markdownContent: cv.extractedText || '' // Use original CV text as markdown content
         });
       }
       

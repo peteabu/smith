@@ -35,6 +35,7 @@ export interface CvOptimizationResult {
   matchingKeywords: string[];
   missingKeywords: string[];
   id?: number;
+  markdownContent?: string;
 }
 
 /**
