@@ -103,52 +103,77 @@ function createPDF(content: string, format: 'pdf' | 'latex' = 'pdf'): Buffer {
   
   // Add resume content
   const plainText = cleanText(content);
+  console.log(`PDF Creation - Content length: ${content.length}, Cleaned text length: ${plainText.length}`);
   
-  // Extract basic sections using regex
-  const sectionRegex = /<h2[^>]*>([\s\S]*?)<\/h2>([\s\S]*?)(?=<h2|$)/gi;
-  let match;
-  let hasSections = false;
-  
-  while ((match = sectionRegex.exec(content)) !== null) {
-    hasSections = true;
-    const sectionTitle = cleanText(match[1]);
-    const sectionContent = cleanText(match[2]);
+  try {
+    // Extract basic sections using regex
+    const sectionRegex = /<h2[^>]*>([\s\S]*?)<\/h2>([\s\S]*?)(?=<h2|$)/gi;
+    let match;
+    let hasSections = false;
     
-    // Format according to PDF style
-    if (format === 'latex') {
-      // Academic style
-      doc.font('Helvetica-Bold').fontSize(fontSize.heading)
-        .text(sectionTitle.toUpperCase());
-      doc.moveDown(0.5);
+    while ((match = sectionRegex.exec(content)) !== null) {
+      hasSections = true;
+      const sectionTitle = cleanText(match[1]);
+      const sectionContent = cleanText(match[2]);
       
-      doc.font('Helvetica').fontSize(fontSize.normal)
-        .text(sectionContent, { align: 'justify' });
-    } else {
-      // Modern style
-      doc.font('Helvetica-Bold').fontSize(fontSize.heading)
-        .text(sectionTitle);
+      console.log(`PDF Section: "${sectionTitle}" - Content length: ${sectionContent.length}`);
       
-      doc.moveDown(0.3);
-      doc.fontSize(1).text('_'.repeat(80), { align: 'center' });
-      doc.moveDown(0.5);
+      // Format according to PDF style
+      if (format === 'latex') {
+        // Academic style
+        doc.font('Helvetica-Bold').fontSize(fontSize.heading)
+          .text(sectionTitle.toUpperCase());
+        doc.moveDown(0.5);
+        
+        doc.font('Helvetica').fontSize(fontSize.normal)
+          .text(sectionContent, { align: 'justify' });
+      } else {
+        // Modern style
+        doc.font('Helvetica-Bold').fontSize(fontSize.heading)
+          .text(sectionTitle);
+        
+        doc.moveDown(0.3);
+        doc.fontSize(1).text('_'.repeat(80), { align: 'center' });
+        doc.moveDown(0.5);
+        
+        doc.font('Helvetica').fontSize(fontSize.normal)
+          .text(sectionContent);
+      }
       
-      doc.font('Helvetica').fontSize(fontSize.normal)
-        .text(sectionContent);
+      doc.moveDown(1);
     }
     
-    doc.moveDown(1);
-  }
-  
-  // If no sections were found, add plain text content
-  if (!hasSections && plainText) {
+    // If no sections were found, add plain text content
+    if (!hasSections) {
+      console.log("PDF Creation - No sections found, using plain text");
+      
+      // Split plain text into paragraphs for better formatting
+      const paragraphs = plainText.split('\n');
+      
+      for (const paragraph of paragraphs) {
+        if (paragraph.trim()) {
+          doc.font('Helvetica').fontSize(fontSize.normal)
+            .text(paragraph.trim(), { align: 'left' });
+          doc.moveDown(0.5);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error generating PDF content:", error);
+    
+    // Fallback - just add the plain text
     doc.font('Helvetica').fontSize(fontSize.normal)
-      .text(plainText, { align: 'left' });
+      .text("An error occurred while formatting the resume. Here is the plain content:", { align: 'left' });
+    doc.moveDown(1);
+    
+    doc.font('Helvetica').fontSize(fontSize.normal)
+      .text(plainText || "No content available", { align: 'left' });
   }
   
   // Finalize the PDF
   doc.end();
   
-  // Return the PDF as a buffer
+  // Wait for all chunks to be collected
   return Buffer.concat(buffers);
 }
 
@@ -500,36 +525,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const optimizedCvId = parseInt(req.params.id);
       const format = (req.query.format as 'pdf' | 'latex') || 'pdf';
       
+      console.log(`PDF Download requested - ID: ${optimizedCvId}, Format: ${format}`);
+      
       // Get the optimized CV
       const optimizedCV = await storage.getOptimizedCV(optimizedCvId);
       
       if (!optimizedCV) {
+        console.error(`Optimized CV not found for ID: ${optimizedCvId}`);
         return res.status(404).json({ error: 'Optimized CV not found' });
       }
+      
+      console.log(`Found optimized CV - Content length: ${optimizedCV.content?.length || 0} characters`);
       
       // Get the original CV if available
       let cv = null;
       if (optimizedCV.cvId !== null) {
         cv = await storage.getCVDocument(optimizedCV.cvId);
+        console.log(`Found original CV - ID: ${cv?.id}, Text length: ${cv?.extractedText?.length || 0} characters`);
       }
       
       // Get the job description if available
       let jobDescription = null;
       if (optimizedCV.jobDescriptionId !== null) {
         jobDescription = await storage.getJobDescription(optimizedCV.jobDescriptionId);
+        console.log(`Found job description - ID: ${jobDescription?.id}`);
+      }
+      
+      // Make sure we have content to generate the PDF
+      if (!optimizedCV.content || optimizedCV.content.trim().length === 0) {
+        console.error("Optimized CV content is empty, generating fallback content");
+        
+        // Generate a minimal fallback content
+        let fallbackContent = '<h2>Resume Content</h2>';
+        if (cv && cv.extractedText) {
+          fallbackContent += `<p>${cv.extractedText.replace(/\n/g, '</p><p>')}</p>`;
+        } else {
+          fallbackContent += '<p>No content available for this resume.</p>';
+        }
+        
+        optimizedCV.content = fallbackContent;
       }
       
       // Generate PDF from the optimized content
       const filename = `optimized-cv-${new Date().toISOString().slice(0, 10)}.pdf`;
+      console.log(`Generating PDF with ${format} format...`);
+      
+      // Create the PDF
       const pdfBuffer = createPDF(optimizedCV.content, format);
+      console.log(`PDF generated - Buffer size: ${pdfBuffer.length} bytes`);
+      
+      if (pdfBuffer.length === 0) {
+        throw new Error("Generated PDF is empty");
+      }
       
       // Set headers for file download
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Content-Length', pdfBuffer.length);
       
       // Send the PDF
       res.send(pdfBuffer);
+      console.log(`PDF sent to client - ${filename}`);
     } catch (error) {
       console.error('Error downloading CV:', error);
       res.status(500).json({ error: 'Failed to download CV' });
