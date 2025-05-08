@@ -242,33 +242,7 @@ function optimizeCV(cvText: string, keywords: string[]): {
   };
 }
 
-export async function registerRoutes(app: Express): Promise<Server> {
-  // Create HTTP server
-  const server = createServer(app);
-  
-  // Initialize Socket.IO
-  const io = new SocketIOServer(server, {
-    cors: {
-      origin: "*",
-      methods: ["GET", "POST"]
-    }
-  });
-  
-  // Set up socket connection
-  io.on('connection', (socket) => {
-    console.log('Client connected:', socket.id);
-    
-    socket.on('disconnect', () => {
-      console.log('Client disconnected:', socket.id);
-    });
-  });
-  
-  // Socket.IO middleware to pass the io instance to req
-  app.use((req: any, _res: Response, next: NextFunction) => {
-    req.io = io;
-    next();
-  });
-  
+export async function registerRoutes(app: Express): Promise<void> {
   // Register the files router
   app.use('/api/files', filesRouter);
   
