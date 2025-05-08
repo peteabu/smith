@@ -95,26 +95,30 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
         </div>
         
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePasteResume}
-            className="flex items-center gap-1 border-brown text-brown"
-          >
-            <Clipboard className="h-4 w-4" />
-            <span>Paste</span>
-          </Button>
+          <div className="relative">
+            <div className="absolute inset-0 bg-paper rounded border border-brown/50"></div>
+            <button
+              onClick={handlePasteResume}
+              className="relative font-mono text-xs py-1 px-3 border-2 border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 flex items-center gap-1"
+            >
+              <Clipboard className="h-4 w-4 text-brown-dark" />
+              <span className="text-brown-dark">Paste</span>
+            </button>
+            <div className="absolute -bottom-0.5 -right-0.5 w-full h-full bg-brown/10 rounded border border-brown/30 -z-10"></div>
+          </div>
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleTogglePreview}
-            className="flex items-center gap-1 border-brown text-brown"
-            disabled={!resumeText.trim()}
-          >
-            <Eye className="h-4 w-4" />
-            <span>{isPreviewMode ? "Edit" : "Preview"}</span>
-          </Button>
+          <div className="relative">
+            <div className="absolute inset-0 bg-paper rounded border border-brown/50"></div>
+            <button
+              onClick={handleTogglePreview}
+              className="relative font-mono text-xs py-1 px-3 border-2 border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!resumeText.trim()}
+            >
+              <Eye className="h-4 w-4 text-brown-dark" />
+              <span className="text-brown-dark">{isPreviewMode ? "Edit" : "Preview"}</span>
+            </button>
+            <div className="absolute -bottom-0.5 -right-0.5 w-full h-full bg-brown/10 rounded border border-brown/30 -z-10"></div>
+          </div>
         </div>
       </div>
       
@@ -143,21 +147,27 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
           </div>
         </div>
         
-        <Button
-          variant="default"
-          onClick={handleSaveResume}
-          disabled={isUploading || !resumeText.trim()}
-          className="bg-brown text-white hover:bg-brown-dark"
-        >
-          {isUploading ? (
-            <>
-              <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
-              <span>Saving...</span>
-            </>
-          ) : (
-            "Save Resume"
-          )}
-        </Button>
+        <div className="relative inline-block">
+          <div className="absolute inset-0 bg-paper rounded border border-brown/50"></div>
+          <button
+            onClick={handleSaveResume}
+            disabled={isUploading || !resumeText.trim()}
+            className="relative font-mono text-md py-2 px-5 border-2 border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+          >
+            {isUploading ? (
+              <>
+                <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-brown-dark border-b-transparent"></span>
+                <span className="text-brown-dark font-bold">Saving...</span>
+              </>
+            ) : (
+              <span className="text-brown-dark font-bold relative">
+                Save Resume
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brown/30"></span>
+              </span>
+            )}
+          </button>
+          <div className="absolute -bottom-1 -right-1 w-full h-full bg-brown/10 rounded border border-brown/30 -z-10"></div>
+        </div>
       </div>
     </div>
   );
