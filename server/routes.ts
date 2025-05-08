@@ -1,25 +1,20 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import multer from "multer";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import {
   analyzeJobDescriptionSchema,
   optimizeCVSchema,
-  insertCVDocumentSchema,
-  insertJobDescriptionSchema
+  insertJobDescriptionSchema,
+  insertCVDocumentSchema
 } from "@shared/schema";
-import path from "path";
-import fs from "fs";
-import { execSync } from "child_process";
 import natural from "natural";
 import PDFDocument from "pdfkit";
-import pdfParse from "./pdf-parser";
 import * as openaiService from "./openai";
-
-// Configure multer for memory storage
-const upload = multer({ storage: multer.memoryStorage() });
+import filesRouter from "./routes/files";
+import { base64ToBuffer, extractTextFromPDF } from "./routes/utils";
+import pdfParse from "./pdf-parser";
 
 // Natural language processing tokenizer
 const tokenizer = new natural.WordTokenizer();
@@ -64,21 +59,7 @@ function extractKeywords(text: string): string[] {
   return sortedWords.slice(0, 20);
 }
 
-// Helper function to extract text from PDF Buffer
-async function extractTextFromPDF(buffer: Buffer): Promise<string> {
-  try {
-    const data = await pdfParse(buffer);
-    return data.text;
-  } catch (error) {
-    console.error('Error extracting text from PDF:', error);
-    return '';
-  }
-}
-
-// Helper function to decode base64 to buffer
-function base64ToBuffer(base64: string): Buffer {
-  return Buffer.from(base64, 'base64');
-}
+// Functions moved to routes/utils.ts
 
 // Helper function to create a PDF from HTML content
 function createPDF(content: string, format: 'pdf' | 'latex' = 'pdf'): Buffer {

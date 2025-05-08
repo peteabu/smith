@@ -47,6 +47,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const insertCVDocumentSchema = createInsertSchema(cvDocuments).pick({
   fileName: true,
   fileContent: true,
+  fileUrl: true,
   fileType: true,
   extractedText: true,
   userId: true,

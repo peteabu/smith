@@ -1,16 +1,32 @@
-import fs from 'fs';
 import path from 'path';
+import fs from 'fs/promises';
 import crypto from 'crypto';
 
-// Directory where we'll store the files
-const STORAGE_DIR = path.join(process.cwd(), 'storage');
+const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
 
-// Ensure the storage directory exists
-if (!fs.existsSync(STORAGE_DIR)) {
-  fs.mkdirSync(STORAGE_DIR, { recursive: true });
+// Ensure the upload directory exists
+async function ensureUploadDir() {
+  try {
+    await fs.mkdir(UPLOAD_DIR, { recursive: true });
+  } catch (error) {
+    console.error('Error creating upload directory:', error);
+    throw error;
+  }
 }
 
-interface StoredFile {
+// Generate a safe filename with a random component to avoid collisions
+function generateSafeFilename(originalName: string): string {
+  const timestamp = Date.now();
+  const randomString = crypto.randomBytes(8).toString('hex');
+  const ext = path.extname(originalName);
+  const basename = path.basename(originalName, ext)
+    .replace(/[^a-zA-Z0-9]/g, '-') // Replace non-alphanumeric chars with hyphens
+    .toLowerCase();
+  
+  return `${basename}-${timestamp}-${randomString}${ext}`;
+}
+
+export interface StoredFile {
   url: string;
   fileName: string;
   contentType: string;
@@ -22,62 +38,58 @@ interface StoredFile {
  */
 export async function saveFile(
   fileBuffer: Buffer, 
-  originalFilename: string, 
+  originalName: string, 
   contentType: string
 ): Promise<StoredFile> {
-  // Generate a unique filename to avoid collisions
-  const fileId = crypto.randomBytes(16).toString('hex');
-  const extension = path.extname(originalFilename);
-  const fileName = `${fileId}${extension}`;
-  const filePath = path.join(STORAGE_DIR, fileName);
+  await ensureUploadDir();
   
-  // Save the file
-  await fs.promises.writeFile(filePath, fileBuffer);
+  const safeFilename = generateSafeFilename(originalName);
+  const filePath = path.join(UPLOAD_DIR, safeFilename);
   
-  // Return the file metadata
-  return {
-    url: `/api/files/${fileName}`,
-    fileName: originalFilename,
-    contentType,
-    filePath
-  };
+  try {
+    await fs.writeFile(filePath, fileBuffer);
+    
+    // In production, you'd return a CDN URL or signed URL
+    // For development, we'll just use a local path
+    const url = `/api/files/${safeFilename}`;
+    
+    return {
+      url,
+      fileName: safeFilename,
+      contentType,
+      filePath
+    };
+  } catch (error) {
+    console.error('Error saving file:', error);
+    throw new Error('Failed to save file');
+  }
 }
 
 /**
  * Get a file from local blob storage
  */
 export async function getFile(fileName: string): Promise<{ buffer: Buffer; contentType: string } | null> {
-  const filePath = path.join(STORAGE_DIR, fileName);
+  const filePath = path.join(UPLOAD_DIR, fileName);
   
   try {
-    // Check if file exists
-    await fs.promises.access(filePath);
+    const buffer = await fs.readFile(filePath);
     
-    // Read the file
-    const buffer = await fs.promises.readFile(filePath);
+    // In a real application, you'd store metadata including content type
+    // Here we're just guessing it from the file extension
+    const ext = path.extname(fileName).toLowerCase();
+    let contentType = 'application/octet-stream'; // Default
     
-    // Determine content type based on extension
-    const extension = path.extname(fileName).toLowerCase();
-    let contentType = 'application/octet-stream'; // Default content type
-    
-    // Map common extensions to content types
-    const contentTypeMap: Record<string, string> = {
-      '.pdf': 'application/pdf',
-      '.doc': 'application/msword',
-      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      '.txt': 'text/plain',
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.png': 'image/png'
-    };
-    
-    if (extension in contentTypeMap) {
-      contentType = contentTypeMap[extension];
+    if (ext === '.pdf') {
+      contentType = 'application/pdf';
+    } else if (ext === '.docx') {
+      contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    } else if (ext === '.doc') {
+      contentType = 'application/msword';
     }
     
     return { buffer, contentType };
   } catch (error) {
-    // File doesn't exist or can't be read
+    console.error('Error retrieving file:', error);
     return null;
   }
 }
@@ -86,12 +98,13 @@ export async function getFile(fileName: string): Promise<{ buffer: Buffer; conte
  * Delete a file from local blob storage
  */
 export async function deleteFile(fileName: string): Promise<boolean> {
-  const filePath = path.join(STORAGE_DIR, fileName);
+  const filePath = path.join(UPLOAD_DIR, fileName);
   
   try {
-    await fs.promises.unlink(filePath);
+    await fs.unlink(filePath);
     return true;
   } catch (error) {
+    console.error('Error deleting file:', error);
     return false;
   }
 }
