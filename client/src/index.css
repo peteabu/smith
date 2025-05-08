@@ -141,13 +141,17 @@
   }
   
   .paper-shadow {
-    box-shadow: 0 1px 2px rgba(0,0,0,0.07), 
-                0 2px 4px rgba(0,0,0,0.07), 
-                0 4px 8px rgba(0,0,0,0.07),
-                0 8px 16px rgba(0,0,0,0.07);
     position: relative;
+    box-shadow: 
+      0 1px 1px rgba(139, 125, 107, 0.12),
+      0 2px 2px rgba(139, 125, 107, 0.12),
+      0 4px 4px rgba(139, 125, 107, 0.12),
+      0 6px 8px rgba(139, 125, 107, 0.12),
+      0 1px 12px rgba(93, 78, 60, 0.1);
+    border: 1px solid rgba(210, 200, 180, 0.35);
   }
   
+  /* Paper texture */
   .paper-shadow::before {
     content: "";
     position: absolute;
@@ -161,8 +165,31 @@
     opacity: 0.5;
     pointer-events: none;
     z-index: 1;
+    border-radius: inherit;
   }
   
+  /* Aged edge effect */
+  .paper-shadow::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    margin: -2px;
+    background: linear-gradient(
+      to bottom right,
+      rgba(210, 195, 165, 0.2),
+      transparent 40%,
+      transparent 60%,
+      rgba(210, 195, 165, 0.2)
+    );
+    border-radius: inherit;
+    z-index: 0;
+    pointer-events: none;
+  }
+  
+  /* Ensure content stays above effects */
   .paper-shadow > * {
     position: relative;
     z-index: 2;
