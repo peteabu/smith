@@ -63,18 +63,22 @@ function extractKeywords(text: string): string[] {
 
 // Helper function to create a PDF from HTML content
 function createPDF(content: string, format: 'pdf' | 'latex' = 'pdf'): Buffer {
-  // Create a basic document structure
+  // Create a document
   const doc = new PDFDocument({ 
     margin: 50, 
     size: 'A4'
   });
+  
+  // Buffer to store PDF data
   const buffers: Buffer[] = [];
   
-  doc.on('data', (chunk) => buffers.push(chunk));
-  doc.on('end', () => {});
+  // Collect PDF data
+  doc.on('data', (chunk) => {
+    buffers.push(chunk);
+  });
   
-  // Set up some basic document properties for typography
-  const fontSizes = {
+  // Define font sizes
+  const fontSize = {
     title: 16,
     heading: 14,
     subheading: 12,
@@ -82,24 +86,13 @@ function createPDF(content: string, format: 'pdf' | 'latex' = 'pdf'): Buffer {
     small: 10
   };
   
-  // Add a title
-  doc.font('Helvetica-Bold').fontSize(fontSizes.title)
+  // Add title
+  doc.font('Helvetica-Bold').fontSize(fontSize.title)
     .text('Professional Resume', { align: 'center' });
   doc.moveDown(1);
   
-  // Extract structured content for better organization
-  const sections: {
-    title: string;
-    content: {
-      type: 'subheading' | 'paragraph' | 'list' | 'date';
-      text: string;
-    }[];
-  }[] = [];
-  
-  let currentSection: typeof sections[0] | null = null;
-  
-  // Helper function to clean text of HTML tags
-  const cleanHtml = (html: string): string => {
+  // Clean HTML content
+  const cleanText = (html: string): string => {
     return html
       .replace(/<span class="bg-green-100[^>]*>([\s\S]*?)<\/span>/gi, '$1')
       .replace(/<span class="font-semibold">([\s\S]*?)<\/span>/gi, '$1')
@@ -108,192 +101,54 @@ function createPDF(content: string, format: 'pdf' | 'latex' = 'pdf'): Buffer {
       .trim();
   };
   
-  // Parse HTML structure for main section headers (h2)
-  const mainSectionRegex = /<h2[^>]*>([\s\S]*?)<\/h2>([\s\S]*?)(?=<h2|$)/gi;
-  let mainSectionMatch;
+  // Add resume content
+  const plainText = cleanText(content);
   
-  while ((mainSectionMatch = mainSectionRegex.exec(content)) !== null) {
-    const sectionTitle = cleanHtml(mainSectionMatch[1]);
-    const sectionContent = mainSectionMatch[2];
-    
-    currentSection = {
-      title: sectionTitle,
-      content: []
-    };
-    
-    // Extract subsections (h3) within this section
-    const subSectionRegex = /<h3[^>]*>([\s\S]*?)<\/h3>([\s\S]*?)(?=<h3|$)/gi;
-    let subSectionMatch;
-    let hasSubSections = false;
-    
-    while ((subSectionMatch = subSectionRegex.exec(sectionContent)) !== null) {
-      hasSubSections = true;
-      const subheading = cleanHtml(subSectionMatch[1]);
-      const subContent = subSectionMatch[2];
-      
-      // Add the subheading
-      currentSection.content.push({
-        type: 'subheading',
-        text: subheading
-      });
-      
-      // Extract date/location info (small text)
-      const dateRegex = /<p class="text-xs[^>]*>([\s\S]*?)<\/p>/gi;
-      let dateMatch;
-      if ((dateMatch = dateRegex.exec(subContent)) !== null) {
-        currentSection.content.push({
-          type: 'date',
-          text: cleanHtml(dateMatch[1])
-        });
-      }
-      
-      // Extract paragraphs
-      const paragraphRegex = /<p[^>]*>([\s\S]*?)<\/p>/gi;
-      let paragraphMatch;
-      while ((paragraphMatch = paragraphRegex.exec(subContent)) !== null) {
-        if (!paragraphMatch[1].includes('class="text-xs')) { // Skip dates we already processed
-          currentSection.content.push({
-            type: 'paragraph',
-            text: cleanHtml(paragraphMatch[1])
-          });
-        }
-      }
-      
-      // Extract lists
-      const listRegex = /<ul[^>]*>([\s\S]*?)<\/ul>/gi;
-      let listMatch;
-      while ((listMatch = listRegex.exec(subContent)) !== null) {
-        const itemRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
-        let itemMatch;
-        while ((itemMatch = itemRegex.exec(listMatch[1])) !== null) {
-          currentSection.content.push({
-            type: 'list',
-            text: cleanHtml(itemMatch[1])
-          });
-        }
-      }
-    }
-    
-    // If no subsections, parse content directly
-    if (!hasSubSections) {
-      // Extract paragraphs
-      const paragraphRegex = /<p[^>]*>([\s\S]*?)<\/p>/gi;
-      let paragraphMatch;
-      while ((paragraphMatch = paragraphRegex.exec(sectionContent)) !== null) {
-        currentSection.content.push({
-          type: 'paragraph',
-          text: cleanHtml(paragraphMatch[1])
-        });
-      }
-      
-      // Extract lists
-      const listRegex = /<ul[^>]*>([\s\S]*?)<\/ul>/gi;
-      let listMatch;
-      while ((listMatch = listRegex.exec(sectionContent)) !== null) {
-        const itemRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
-        let itemMatch;
-        while ((itemMatch = itemRegex.exec(listMatch[1])) !== null) {
-          currentSection.content.push({
-            type: 'list',
-            text: cleanHtml(itemMatch[1])
-          });
-        }
-      }
-    }
-    
-    sections.push(currentSection);
-  }
+  // Extract basic sections using regex
+  const sectionRegex = /<h2[^>]*>([\s\S]*?)<\/h2>([\s\S]*?)(?=<h2|$)/gi;
+  let match;
+  let hasSections = false;
   
-  // If no structured content was found, create a basic section with plain text
-  if (sections.length === 0) {
-    const plainText = cleanHtml(content);
-    if (plainText) {
-      sections.push({
-        title: "Resume Content",
-        content: [{
-          type: 'paragraph',
-          text: plainText
-        }]
-      });
-    }
-  }
-  
-  // Now generate the PDF with proper formatting based on the extracted structure
-  if (format === 'latex') {
-    // More academic/formal style
-    sections.forEach(section => {
-      doc.font('Helvetica-Bold').fontSize(fontSizes.heading)
-        .text(section.title.toUpperCase());
+  while ((match = sectionRegex.exec(content)) !== null) {
+    hasSections = true;
+    const sectionTitle = cleanText(match[1]);
+    const sectionContent = cleanText(match[2]);
+    
+    // Format according to PDF style
+    if (format === 'latex') {
+      // Academic style
+      doc.font('Helvetica-Bold').fontSize(fontSize.heading)
+        .text(sectionTitle.toUpperCase());
       doc.moveDown(0.5);
       
-      section.content.forEach(item => {
-        switch (item.type) {
-          case 'subheading':
-            doc.font('Helvetica-Bold').fontSize(fontSizes.subheading)
-              .text(item.text);
-            break;
-          case 'date':
-            doc.font('Helvetica-Oblique').fontSize(fontSizes.small)
-              .text(item.text);
-            doc.moveDown(0.3);
-            break;
-          case 'paragraph':
-            doc.font('Helvetica').fontSize(fontSizes.normal)
-              .text(item.text, { align: 'justify' });
-            doc.moveDown(0.5);
-            break;
-          case 'list':
-            doc.font('Helvetica').fontSize(fontSizes.normal)
-              .text(`  • ${item.text}`);
-            doc.moveDown(0.3);
-            break;
-        }
-      });
+      doc.font('Helvetica').fontSize(fontSize.normal)
+        .text(sectionContent, { align: 'justify' });
+    } else {
+      // Modern style
+      doc.font('Helvetica-Bold').fontSize(fontSize.heading)
+        .text(sectionTitle);
       
-      doc.moveDown(1);
-    });
-  } else {
-    // Modern professional style
-    sections.forEach(section => {
-      // Add section heading
-      doc.font('Helvetica-Bold').fontSize(fontSizes.heading)
-        .text(section.title);
       doc.moveDown(0.3);
-      
-      // Add a divider line
       doc.fontSize(1).text('_'.repeat(80), { align: 'center' });
       doc.moveDown(0.5);
       
-      // Process section content
-      section.content.forEach(item => {
-        switch (item.type) {
-          case 'subheading':
-            doc.font('Helvetica-Bold').fontSize(fontSizes.subheading)
-              .text(item.text);
-            break;
-          case 'date':
-            doc.font('Helvetica-Oblique').fontSize(fontSizes.small)
-              .text(item.text);
-            doc.moveDown(0.3);
-            break;
-          case 'paragraph':
-            doc.font('Helvetica').fontSize(fontSizes.normal)
-              .text(item.text, { align: 'left' });
-            doc.moveDown(0.5);
-            break;
-          case 'list':
-            doc.font('Helvetica').fontSize(fontSizes.normal)
-              .text(`  • ${item.text}`);
-            doc.moveDown(0.3);
-            break;
-        }
-      });
-      
-      doc.moveDown(1);
-    });
+      doc.font('Helvetica').fontSize(fontSize.normal)
+        .text(sectionContent);
+    }
+    
+    doc.moveDown(1);
   }
   
+  // If no sections were found, add plain text content
+  if (!hasSections && plainText) {
+    doc.font('Helvetica').fontSize(fontSize.normal)
+      .text(plainText, { align: 'left' });
+  }
+  
+  // Finalize the PDF
   doc.end();
+  
+  // Return the PDF as a buffer
   return Buffer.concat(buffers);
 }
 
