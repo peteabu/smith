@@ -87,11 +87,9 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
       <div className="p-6 bg-white/90 min-h-[500px]" id="resume-preview">
         {!optimizedCV ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-brown">
-            <img
-              src="https://images.unsplash.com/photo-1455390582262-044cdead277a?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200&q=80"
-              alt="Vintage writing desk"
-              className="w-24 h-24 opacity-60 mb-4"
-            />
+            <div className="w-24 h-24 flex items-center justify-center mb-4 border-2 border-dashed border-brown/30 rounded-lg">
+              <FileCode className="w-10 h-10 text-brown/40" />
+            </div>
             <h3 className="font-display text-lg mb-2">No CV Optimized Yet</h3>
             <p className="text-sm max-w-xs">
               Upload your base CV and paste a job description to generate an optimized resume
