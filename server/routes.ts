@@ -513,6 +513,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         industryKeywords: analysisResult.industryKeywords,
         recruitmentInsights: analysisResult.recruitmentInsights,
         atsFindings: analysisResult.atsFindings,
+        webSearchResults: analysisResult.webSearchResults,
         analysisSteps: analysisResult.analysisSteps
       });
     } catch (error) {

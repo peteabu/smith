@@ -76,7 +76,7 @@ export class DatabaseStorage implements IStorage {
   
   // Job Description methods
   async createJobDescription(jobDescription: InsertJobDescription): Promise<JobDescription> {
-    // Ensure keywords is properly formatted for PostgreSQL
+    // Insert all fields from the job description
     const [jobDesc] = await db
       .insert(jobDescriptions)
       .values({
@@ -84,8 +84,11 @@ export class DatabaseStorage implements IStorage {
         createdAt: new Date().toISOString(),
         userId: jobDescription.userId || null,
         cvId: jobDescription.cvId || null,
-        // Handle keyword arrays
-        keywords: jobDescription.keywords
+        keywords: jobDescription.keywords,
+        roleResearch: jobDescription.roleResearch,
+        industryKeywords: jobDescription.industryKeywords,
+        recruitmentInsights: jobDescription.recruitmentInsights,
+        atsFindings: jobDescription.atsFindings
       })
       .returning();
     return jobDesc;

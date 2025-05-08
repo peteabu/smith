@@ -27,6 +27,7 @@ export const jobDescriptions = pgTable("job_descriptions", {
   industryKeywords: jsonb("industry_keywords").$type<string[]>(), // Industry-specific keywords
   recruitmentInsights: text("recruitment_insights"), // Insights about recruitment in the industry
   atsFindings: text("ats_findings"), // Findings about ATS systems for this role
+  webSearchResults: jsonb("web_search_results"), // Web search results used for analysis
   cvId: integer("cv_id").references(() => cvDocuments.id),
   userId: integer("user_id").references(() => users.id),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
@@ -64,6 +65,7 @@ export const insertJobDescriptionSchema = createInsertSchema(jobDescriptions).pi
   industryKeywords: true,
   recruitmentInsights: true,
   atsFindings: true,
+  webSearchResults: true,
   cvId: true,
   userId: true,
 });
