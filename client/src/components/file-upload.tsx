@@ -114,22 +114,20 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
         </div>
       </div>
       
-      <div className="relative border rounded-md bg-paper shadow-inner p-4 min-h-[40vh] font-mono">
-        {isPreviewMode ? (
-          <div className="whitespace-pre-wrap overflow-y-auto max-h-[40vh] p-2 text-sm">
-            {resumeText || (
-              <span className="text-brown-light italic">No resume content to preview</span>
-            )}
-          </div>
-        ) : (
-          <Textarea
-            value={resumeText}
-            onChange={(e) => setResumeText(e.target.value)}
-            placeholder="Paste your resume text here..."
-            className="w-full min-h-[40vh] border-none focus:outline-none resize-none font-mono bg-paper text-sm"
-          />
-        )}
-      </div>
+      {isPreviewMode ? (
+        <div className="whitespace-pre-wrap overflow-y-auto h-64 p-4 bg-paper font-mono text-sm border border-brown/30 rounded">
+          {resumeText || (
+            <span className="text-brown-light italic">No resume content to preview</span>
+          )}
+        </div>
+      ) : (
+        <Textarea
+          value={resumeText}
+          onChange={(e) => setResumeText(e.target.value)}
+          placeholder="Paste your resume text here..."
+          className="w-full h-64 p-4 bg-paper font-mono text-sm border border-brown/30 rounded focus:ring-1 focus:ring-brown focus:outline-none"
+        />
+      )}
       
       <div className="flex justify-between items-center mt-4">
         <div className="text-xs text-brown">
