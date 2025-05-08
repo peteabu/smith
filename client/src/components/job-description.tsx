@@ -175,7 +175,7 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
           id="job-description" 
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="w-full h-64 p-4 bg-cream font-mono text-sm border border-brown/30 rounded focus:ring-1 focus:ring-brown focus:outline-none typewriter-cursor" 
+          className="w-full h-64 p-4 font-mono text-sm typewriter-cursor" 
           placeholder="Paste job description here..."
         />
         

@@ -115,7 +115,7 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
       </div>
       
       {isPreviewMode ? (
-        <div className="whitespace-pre-wrap overflow-y-auto h-64 p-4 bg-paper font-mono text-sm border border-brown/30 rounded">
+        <div className="whitespace-pre-wrap overflow-y-auto h-64 p-4 bg-cream font-mono text-sm border border-brown/30 rounded">
           {resumeText || (
             <span className="text-brown-light italic">No resume content to preview</span>
           )}
@@ -125,7 +125,7 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
           value={resumeText}
           onChange={(e) => setResumeText(e.target.value)}
           placeholder="Paste your resume text here..."
-          className="w-full h-64 p-4 bg-paper font-mono text-sm border border-brown/30 rounded focus:ring-1 focus:ring-brown focus:outline-none"
+          className="w-full h-64 p-4 font-mono text-sm"
         />
       )}
       
