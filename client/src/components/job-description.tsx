@@ -192,12 +192,6 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
                 className="absolute top-0 left-0 h-full bg-brown/40 transition-all duration-300"
                 style={{ width: `${calculateProgress()}%` }}
               ></div>
-              {/* Add typewriter texture dots */}
-              <div className="absolute top-0 left-0 w-full h-full flex justify-between px-1">
-                {Array.from({ length: 20 }).map((_, i) => (
-                  <div key={i} className="h-2 w-0.5 bg-brown/10 rounded-full"></div>
-                ))}
-              </div>
             </div>
             
             <div className="space-y-2 max-h-40 overflow-y-auto">
@@ -222,33 +216,28 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
           </div>
         )}
         
-        <div className="relative inline-block w-full">
-          <div className="absolute inset-0 bg-paper rounded border border-brown/50"></div>
-          <button
-            onClick={handleAnalyze}
-            disabled={isAnalyzing || value.length < 50}
-            className="relative font-mono text-md py-3 px-8 border-2 border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center w-full"
-          >
-            {isAnalyzing ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-brown-dark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span className="text-brown-dark font-bold tracking-wide">Analyzing...</span>
-              </>
-            ) : (
-              <>
-                <Search className="mr-2 h-5 w-5 text-brown-dark" />
-                <span className="text-brown-dark font-bold tracking-wide relative">
-                  Analyze Keywords
-                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brown/30"></span>
-                </span>
-              </>
-            )}
-          </button>
-          <div className="absolute -bottom-1 -right-1 w-full h-full bg-brown/10 rounded border border-brown/30 -z-10"></div>
-        </div>
+        <button
+          onClick={handleAnalyze}
+          disabled={isAnalyzing || value.length < 50}
+          className="font-mono text-md py-3 px-8 border border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center w-full"
+        >
+          {isAnalyzing ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-brown-dark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span className="text-brown-dark font-bold">Analyzing...</span>
+            </>
+          ) : (
+            <>
+              <Search className="mr-2 h-5 w-5 text-brown-dark" />
+              <span className="text-brown-dark font-bold">
+                Analyze Keywords
+              </span>
+            </>
+          )}
+        </button>
       </div>
     </div>
   );

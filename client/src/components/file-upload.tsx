@@ -87,7 +87,7 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
   };
 
   return (
-    <div className="bg-white border-2 border-brown rounded-lg p-6 paper-shadow">
+    <div className="bg-white border border-brown/30 rounded-lg p-6 paper-shadow">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="font-display text-lg">Enter your resume text</h2>
@@ -95,30 +95,22 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
         </div>
         
         <div className="flex gap-2">
-          <div className="relative">
-            <div className="absolute inset-0 bg-paper rounded border border-brown/50"></div>
-            <button
-              onClick={handlePasteResume}
-              className="relative font-mono text-xs py-1 px-3 border-2 border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 flex items-center gap-1"
-            >
-              <Clipboard className="h-4 w-4 text-brown-dark" />
-              <span className="text-brown-dark">Paste</span>
-            </button>
-            <div className="absolute -bottom-0.5 -right-0.5 w-full h-full bg-brown/10 rounded border border-brown/30 -z-10"></div>
-          </div>
+          <button
+            onClick={handlePasteResume}
+            className="font-mono text-xs py-1 px-3 border border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 flex items-center gap-1"
+          >
+            <Clipboard className="h-4 w-4 text-brown-dark" />
+            <span className="text-brown-dark">Paste</span>
+          </button>
           
-          <div className="relative">
-            <div className="absolute inset-0 bg-paper rounded border border-brown/50"></div>
-            <button
-              onClick={handleTogglePreview}
-              className="relative font-mono text-xs py-1 px-3 border-2 border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!resumeText.trim()}
-            >
-              <Eye className="h-4 w-4 text-brown-dark" />
-              <span className="text-brown-dark">{isPreviewMode ? "Edit" : "Preview"}</span>
-            </button>
-            <div className="absolute -bottom-0.5 -right-0.5 w-full h-full bg-brown/10 rounded border border-brown/30 -z-10"></div>
-          </div>
+          <button
+            onClick={handleTogglePreview}
+            className="font-mono text-xs py-1 px-3 border border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!resumeText.trim()}
+          >
+            <Eye className="h-4 w-4 text-brown-dark" />
+            <span className="text-brown-dark">{isPreviewMode ? "Edit" : "Preview"}</span>
+          </button>
         </div>
       </div>
       
@@ -147,27 +139,22 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
           </div>
         </div>
         
-        <div className="relative inline-block">
-          <div className="absolute inset-0 bg-paper rounded border border-brown/50"></div>
-          <button
-            onClick={handleSaveResume}
-            disabled={isUploading || !resumeText.trim()}
-            className="relative font-mono text-md py-2 px-5 border-2 border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-          >
-            {isUploading ? (
-              <>
-                <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-brown-dark border-b-transparent"></span>
-                <span className="text-brown-dark font-bold">Saving...</span>
-              </>
-            ) : (
-              <span className="text-brown-dark font-bold relative">
-                Save Resume
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brown/30"></span>
-              </span>
-            )}
-          </button>
-          <div className="absolute -bottom-1 -right-1 w-full h-full bg-brown/10 rounded border border-brown/30 -z-10"></div>
-        </div>
+        <button
+          onClick={handleSaveResume}
+          disabled={isUploading || !resumeText.trim()}
+          className="font-mono text-md py-2 px-5 border border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+        >
+          {isUploading ? (
+            <>
+              <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-brown-dark border-b-transparent"></span>
+              <span className="text-brown-dark font-bold">Saving...</span>
+            </>
+          ) : (
+            <span className="text-brown-dark font-bold">
+              Save Resume
+            </span>
+          )}
+        </button>
       </div>
     </div>
   );
