@@ -107,12 +107,6 @@ export function FileUpload({ onCvUploaded }: FileUploadProps) {
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      <img
-        src="https://images.unsplash.com/photo-1504805572947-34fad45aed93?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150&q=80"
-        alt="Vintage typewriter"
-        className="w-20 h-20 mx-auto mb-4 opacity-80 rounded-full object-cover"
-      />
-
       <h2 className="font-display text-lg mb-2">Upload your base CV</h2>
       <p className="text-sm text-brown mb-4">This will serve as your template</p>
 
