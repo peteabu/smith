@@ -4,10 +4,10 @@ import {
   jobDescriptions, type JobDescription, type InsertJobDescription,
   optimizedCVs, type OptimizedCV, type InsertOptimizedCV
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and } from "drizzle-orm";
 
-// modify the interface with any CRUD methods
-// you might need
-
+// Storage interface with CRUD methods
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -27,109 +27,110 @@ export interface IStorage {
   getOptimizedCVByJobAndDocument(jobId: number, cvId: number): Promise<OptimizedCV | undefined>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private cvDocs: Map<number, CVDocument>;
-  private jobDescs: Map<number, JobDescription>;
-  private optimizedCVs: Map<number, OptimizedCV>;
-  private currentUserId: number;
-  private currentCVDocId: number;
-  private currentJobDescId: number;
-  private currentOptimizedCVId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.cvDocs = new Map();
-    this.jobDescs = new Map();
-    this.optimizedCVs = new Map();
-    this.currentUserId = 1;
-    this.currentCVDocId = 1;
-    this.currentJobDescId = 1;
-    this.currentOptimizedCVId = 1;
-  }
-
+// Database storage implementation
+export class DatabaseStorage implements IStorage {
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
-
+  
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
-
+  
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
   
   // CV Document methods
   async createCVDocument(document: InsertCVDocument): Promise<CVDocument> {
-    const id = this.currentCVDocId++;
-    const cvDocument: CVDocument = { 
-      fileName: document.fileName,
-      fileContent: document.fileContent,
-      fileType: document.fileType,
-      extractedText: document.extractedText || null,
-      userId: document.userId || null,
-      id,
-      createdAt: new Date().toISOString()
-    };
-    this.cvDocs.set(id, cvDocument);
+    // Create a record with current timestamp
+    const [cvDocument] = await db
+      .insert(cvDocuments)
+      .values({
+        fileName: document.fileName,
+        fileContent: document.fileUrl || document.fileContent, // Store URL instead of content when possible
+        fileType: document.fileType,
+        extractedText: document.extractedText || null,
+        userId: document.userId || null,
+        createdAt: new Date().toISOString()
+      })
+      .returning();
     return cvDocument;
   }
   
   async getCVDocument(id: number): Promise<CVDocument | undefined> {
-    return this.cvDocs.get(id);
+    const [document] = await db
+      .select()
+      .from(cvDocuments)
+      .where(eq(cvDocuments.id, id));
+    return document || undefined;
   }
   
   // Job Description methods
   async createJobDescription(jobDescription: InsertJobDescription): Promise<JobDescription> {
-    const id = this.currentJobDescId++;
-    const jobDesc: JobDescription = { 
-      content: jobDescription.content,
-      id,
-      createdAt: new Date().toISOString(),
-      userId: jobDescription.userId || null,
-      cvId: jobDescription.cvId || null,
-      // Handle any[] type and convert to string[] explicitly
-      keywords: jobDescription.keywords ? (jobDescription.keywords as unknown as string[]) : null
-    };
-    this.jobDescs.set(id, jobDesc);
+    // Ensure keywords is properly formatted for PostgreSQL
+    const [jobDesc] = await db
+      .insert(jobDescriptions)
+      .values({
+        content: jobDescription.content,
+        createdAt: new Date().toISOString(),
+        userId: jobDescription.userId || null,
+        cvId: jobDescription.cvId || null,
+        // Handle keyword arrays
+        keywords: jobDescription.keywords
+      })
+      .returning();
     return jobDesc;
   }
   
   async getJobDescription(id: number): Promise<JobDescription | undefined> {
-    return this.jobDescs.get(id);
+    const [jobDesc] = await db
+      .select()
+      .from(jobDescriptions)
+      .where(eq(jobDescriptions.id, id));
+    return jobDesc || undefined;
   }
   
   // Optimized CV methods
   async createOptimizedCV(optimizedCV: InsertOptimizedCV): Promise<OptimizedCV> {
-    const id = this.currentOptimizedCVId++;
-    const optCV: OptimizedCV = { 
-      ...optimizedCV, 
-      id,
-      createdAt: new Date().toISOString(),
-      userId: optimizedCV.userId || null,
-      cvId: optimizedCV.cvId || null,
-      jobDescriptionId: optimizedCV.jobDescriptionId || null
-    };
-    this.optimizedCVs.set(id, optCV);
+    const [optCV] = await db
+      .insert(optimizedCVs)
+      .values({
+        ...optimizedCV,
+        createdAt: new Date().toISOString(),
+        userId: optimizedCV.userId || null,
+        cvId: optimizedCV.cvId || null,
+        jobDescriptionId: optimizedCV.jobDescriptionId || null
+      })
+      .returning();
     return optCV;
   }
   
   async getOptimizedCV(id: number): Promise<OptimizedCV | undefined> {
-    return this.optimizedCVs.get(id);
+    const [optCV] = await db
+      .select()
+      .from(optimizedCVs)
+      .where(eq(optimizedCVs.id, id));
+    return optCV || undefined;
   }
   
   async getOptimizedCVByJobAndDocument(jobId: number, cvId: number): Promise<OptimizedCV | undefined> {
-    return Array.from(this.optimizedCVs.values()).find(
-      (cv) => cv.jobDescriptionId === jobId && cv.cvId === cvId
-    );
+    const [optCV] = await db
+      .select()
+      .from(optimizedCVs)
+      .where(and(
+        eq(optimizedCVs.jobDescriptionId, jobId),
+        eq(optimizedCVs.cvId, cvId)
+      ));
+    return optCV || undefined;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

@@ -11,7 +11,8 @@ export const users = pgTable("users", {
 export const cvDocuments = pgTable("cv_documents", {
   id: serial("id").primaryKey(),
   fileName: text("file_name").notNull(),
-  fileContent: text("file_content").notNull(), // Base64 encoded file content
+  fileContent: text("file_content"), // Base64 encoded file content (optional if fileUrl is provided)
+  fileUrl: text("file_url"), // URL to stored file in blob storage
   fileType: text("file_type").notNull(), // mime type
   extractedText: text("extracted_text"), // Extracted text from CV
   userId: integer("user_id").references(() => users.id),
