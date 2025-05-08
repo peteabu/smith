@@ -1,4 +1,5 @@
 import { apiRequest } from "./queryClient";
+import { fileToBase64 } from "./utils";
 
 export interface KeywordAnalysisResult {
   keywords: string[];
@@ -55,29 +56,97 @@ export async function optimizeCV(
 }
 
 /**
- * Uploads a CV file to the server
+ * Preview extracted text from CV before uploading
  */
-export async function uploadCV(
-  file: File,
-  fileContent: string
-): Promise<{ id: number; fileName: string }> {
+export async function previewCVText(
+  file: File
+): Promise<{ 
+  extractedText: string; 
+  isValid: boolean; 
+  errorMessage: string | null;
+}> {
   try {
-    // Create a FormData object to send the file
-    const formData = new FormData();
-    formData.append('file', file);
+    // Convert file to base64
+    const fileContent = await fileToBase64(file);
     
-    // Use FormData for the new endpoint
-    const response = await fetch('/api/files/upload', {
+    // Make request to preview endpoint
+    const response = await fetch('/api/cv/preview', {
       method: 'POST',
-      body: formData,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        fileContent,
+        fileType: file.type,
+      }),
       credentials: 'include',
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to upload CV: ${response.statusText}`);
+      const errorData = await response.json();
+      throw new Error(errorData.errorMessage || 'Failed to preview CV text');
     }
     
     return await response.json();
+  } catch (error) {
+    console.error('Failed to preview CV:', error);
+    return {
+      extractedText: '',
+      isValid: false,
+      errorMessage: error instanceof Error ? error.message : 'Failed to preview CV text'
+    };
+  }
+}
+
+/**
+ * Uploads a CV file to the server
+ */
+export async function uploadCV(
+  file: File,
+  extractedText: string = ''
+): Promise<{ id: number; fileName: string }> {
+  try {
+    if (extractedText) {
+      // If we have pre-extracted text, use the JSON endpoint with base64 file
+      const fileContent = await fileToBase64(file);
+      
+      const response = await fetch('/api/cv/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileContent,
+          fileType: file.type,
+          extractedText
+        }),
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload CV');
+      }
+      
+      return await response.json();
+    } else {
+      // Use existing FormData approach as fallback
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('/api/files/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to upload CV: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    }
   } catch (error) {
     console.error('Failed to upload CV:', error);
     throw error;

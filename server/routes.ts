@@ -366,18 +366,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/files', filesRouter);
   
   // API Routes
-  app.post('/api/cv/upload', async (req: Request, res: Response) => {
+  // Preview extracted text endpoint
+  app.post('/api/cv/preview', async (req: Request, res: Response) => {
     try {
-      const { fileName, fileContent, fileType } = req.body;
-      
-      // Validate the request
-      const validatedData = insertCVDocumentSchema.parse({
-        fileName,
-        fileContent,
-        fileType,
-        extractedText: '', // Will be populated below
-        userId: null  // Anonymous for now
-      });
+      const { fileContent, fileType } = req.body;
       
       // Decode the base64 content
       const fileBuffer = base64ToBuffer(fileContent);
@@ -389,18 +381,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // For simplicity, we'll just use a placeholder for Word docs
         // In a real app, you'd use a Word document parser
-        extractedText = `Sample extracted text from ${fileName}`;
+        extractedText = `Sample extracted text from document`;
+      }
+      
+      // Check if extracted text looks like an error message
+      const isError = extractedText.includes('ERROR:') || 
+                     !extractedText || 
+                     extractedText.length < 100 || 
+                     !/[a-zA-Z]{5,}/.test(extractedText);
+      
+      res.status(200).json({
+        extractedText,
+        isValid: !isError,
+        errorMessage: isError ? extractedText : null
+      });
+    } catch (error) {
+      console.error('Error previewing CV text:', error);
+      res.status(500).json({ 
+        isValid: false, 
+        errorMessage: 'Failed to extract text from document'
+      });
+    }
+  });
+
+  app.post('/api/cv/upload', async (req: Request, res: Response) => {
+    try {
+      const { fileName, fileContent, fileType, extractedText } = req.body;
+      
+      // Validate the request
+      const validatedData = insertCVDocumentSchema.parse({
+        fileName,
+        fileContent,
+        fileType,
+        extractedText: extractedText || '', // Use provided extracted text or empty string
+        userId: null  // Anonymous for now
+      });
+      
+      // If no extracted text was provided, extract it now
+      let finalExtractedText = extractedText;
+      if (!finalExtractedText) {
+        // Decode the base64 content
+        const fileBuffer = base64ToBuffer(fileContent);
+        
+        // Extract text from the document
+        if (fileType === 'application/pdf') {
+          finalExtractedText = await extractTextFromPDF(fileBuffer);
+        } else {
+          // For simplicity, we'll just use a placeholder for Word docs
+          finalExtractedText = `Sample extracted text from ${fileName}`;
+        }
       }
       
       // Store the CV document
       const cvDocument = await storage.createCVDocument({
         ...validatedData,
-        extractedText
+        extractedText: finalExtractedText
       });
       
       res.status(201).json({ 
         id: cvDocument.id,
-        fileName: cvDocument.fileName
+        fileName: cvDocument.fileName,
+        extractedText: finalExtractedText.substring(0, 200) + '...' // Send back a preview
       });
     } catch (error) {
       console.error('Error uploading CV:', error);
