@@ -501,6 +501,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         industryKeywords: analysisResult.industryKeywords,
         recruitmentInsights: analysisResult.recruitmentInsights,
         atsFindings: analysisResult.atsFindings,
+        webSearchResults: analysisResult.webSearchResults,
         cvId: cvId || null,
         userId: null // Anonymous for now
       });

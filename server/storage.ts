@@ -88,7 +88,8 @@ export class DatabaseStorage implements IStorage {
         roleResearch: jobDescription.roleResearch,
         industryKeywords: jobDescription.industryKeywords,
         recruitmentInsights: jobDescription.recruitmentInsights,
-        atsFindings: jobDescription.atsFindings
+        atsFindings: jobDescription.atsFindings,
+        webSearchResults: jobDescription.webSearchResults
       })
       .returning();
     return jobDesc;
