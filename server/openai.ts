@@ -36,6 +36,24 @@ function notifyProgressUpdate(step: {
   }
 }
 
+// Helper function to update step status and notify
+function updateStepStatus(analysisSteps: any[], stepIndex: number, status: 'completed' | 'in-progress' | 'pending', result?: string, sources?: string[]) {
+  if (analysisSteps && analysisSteps[stepIndex]) {
+    analysisSteps[stepIndex].status = status;
+    
+    if (result !== undefined) {
+      analysisSteps[stepIndex].result = result;
+    }
+    
+    if (sources !== undefined) {
+      analysisSteps[stepIndex].sources = sources;
+    }
+    
+    // Notify about the update
+    notifyProgressUpdate(analysisSteps[stepIndex]);
+  }
+}
+
 // Interface for web search results
 interface WebSearchResult {
   title?: string;
@@ -242,6 +260,7 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
     
     // Step 2: Web Research for Role
     result.analysisSteps![1].status = "in-progress";
+    notifyProgressUpdate(result.analysisSteps![1]);
     
     // Perform web search for the role
     const roleSearchQuery = `latest trends and requirements for ${jobTitle} role in ${industry} industry 2024`;
@@ -258,9 +277,10 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
     }
     
     result.analysisSteps![1].status = "completed";
+    notifyProgressUpdate(result.analysisSteps![1]);
     
     // Step 3: Role Research with web search results
-    result.analysisSteps![2].status = "in-progress";
+    updateStepStatus(result.analysisSteps!, 2, 'in-progress');
     
     // Format search results for the prompt
     const roleSearchContent = roleSearchResults.map((result, index) => 
@@ -291,30 +311,38 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
 
     const roleResearch = roleResearchResponse.choices[0].message.content || "";
     result.roleResearch = roleResearch;
-    result.analysisSteps![2].status = "completed";
-    result.analysisSteps![2].result = roleResearch;
+    updateStepStatus(result.analysisSteps!, 2, 'completed', roleResearch);
     
     // Step 4: Web Research for Industry
-    result.analysisSteps![3].status = "in-progress";
+    updateStepStatus(result.analysisSteps!, 3, 'in-progress');
     
     // Perform web search for industry keywords
     const industrySearchQuery = `most important keywords for ${jobTitle} resume in ${industry} industry ATS scanning`;
     const industrySearchResults = await performWebSearch(industrySearchQuery);
     
     // Store the search results
+    result.webSearchResults!.industry = industrySearchResults;
+    
     if (industrySearchResults.length > 0) {
-      result.webSearchResults!.industry = industrySearchResults;
       const sourceUrls = industrySearchResults.map(r => r.url);
-      result.analysisSteps![3].sources = sourceUrls;
-      result.analysisSteps![3].result = `Found ${industrySearchResults.length} relevant sources about industry-specific keywords.`;
+      updateStepStatus(
+        result.analysisSteps!, 
+        3, 
+        'completed', 
+        `Found ${industrySearchResults.length} relevant sources about industry-specific keywords.`,
+        sourceUrls
+      );
     } else {
-      result.analysisSteps![3].result = "No web search results found for industry research.";
+      updateStepStatus(
+        result.analysisSteps!, 
+        3, 
+        'completed', 
+        "No web search results found for industry research."
+      );
     }
     
-    result.analysisSteps![3].status = "completed";
-    
     // Step 5: Industry Research with web search results
-    result.analysisSteps![4].status = "in-progress";
+    updateStepStatus(result.analysisSteps!, 4, 'in-progress');
     
     // Format search results for the prompt
     const industrySearchContent = industrySearchResults.map((result, index) => 
@@ -347,12 +375,10 @@ export async function analyzeJobDescriptionMultiStep(jobDescription: string): Pr
     try {
       const industryData = JSON.parse(industryResearchContent);
       result.industryKeywords = industryData.industryKeywords || [];
-      result.analysisSteps![4].status = "completed";
-      result.analysisSteps![4].result = industryData.explanation || "";
+      updateStepStatus(result.analysisSteps!, 4, 'completed', industryData.explanation || "");
     } catch (error) {
       console.error("Error parsing industry research JSON:", error);
-      result.analysisSteps![4].status = "completed";
-      result.analysisSteps![4].result = "Error extracting industry keywords.";
+      updateStepStatus(result.analysisSteps!, 4, 'completed', "Error extracting industry keywords.");
     }
     
     // Step 6: Web Research for Recruitment Practices
