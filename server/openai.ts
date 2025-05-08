@@ -144,12 +144,20 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
             "6. Keep bullets ≤ 22 words; use numerals for all numbers\n" +
             "7. Jobs ≥ 10 years old: trim to 1-2 bullets\n\n" +
             "OUTPUT FORMAT:\n" +
-            "Return the optimized CV in HTML format with proper structure, keyword highlighting, and improved content. Use these specific HTML elements:\n" +
+            "Return the optimized CV in HTML format with proper structure, keyword highlighting, and improved content. Format it for BOTH web display AND PDF conversion.\n\n" +
+            "Use these specific HTML elements:\n" +
             "- For section titles: <h2 class=\"font-display text-lg border-b border-brown/30 pb-2 mb-3\">Title</h2>\n" +
+            "- For sub-sections or positions: <h3 class=\"font-display text-md font-semibold mt-4 mb-1\">Position | Company</h3>\n" +
+            "- For dates/locations: <p class=\"text-xs text-gray-600 mb-2\">Date range | Location</p>\n" +
             "- For paragraphs: <p class=\"mb-4 text-sm\">Content</p>\n" +
             "- For lists: <ul class=\"text-sm list-disc pl-4 space-y-1\"><li>Item</li></ul>\n" +
             "- For metrics and improvements: <span class=\"font-semibold\">30% increase</span>\n" +
             "- For keywords: <span class=\"bg-green-100 px-1\">keyword</span>\n\n" +
+            "RESUME STRUCTURE REQUIREMENTS:\n" +
+            "1. Always include clear section headers (Education, Experience, Skills, etc.)\n" +
+            "2. Group content logically under these headers\n" +
+            "3. Format job experiences with company, title, dates all clearly identified\n" +
+            "4. Keep bullet points concise and focused\n\n" +
             "Do NOT include ```html tags or markdown formatting in your response - ONLY return pure HTML",
         },
         {
