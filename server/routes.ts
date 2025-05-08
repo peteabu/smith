@@ -658,14 +658,62 @@ export async function registerRoutes(app: Express): Promise<void> {
         contentToUse = fallbackContent;
       }
       
-      // Clean HTML content
+      // Clean HTML content - this preserves ALL the text content
       const cleanText = (html: string): string => {
-        return html
+        // First find the summary box by looking for the keyword "Resume Optimization Summary"
+        const summaryIndex = html.indexOf("Resume Optimization Summary");
+        let contentHtml = html;
+        
+        // If we found the summary box, remove it
+        if (summaryIndex > -1) {
+          // Find the containing div by looking for the last div before the summary
+          const divStart = html.lastIndexOf("<div", summaryIndex);
+          if (divStart > -1) {
+            // Find the end of this div
+            let divNestCount = 1;
+            let divEnd = divStart;
+            const htmlLength = html.length;
+            
+            // Look for matching closing div tag
+            while (divNestCount > 0 && divEnd < htmlLength) {
+              const nextOpenDiv = html.indexOf("<div", divEnd + 1);
+              const nextCloseDiv = html.indexOf("</div>", divEnd + 1);
+              
+              if (nextCloseDiv === -1) break; // Shouldn't happen with valid HTML
+              
+              if (nextOpenDiv !== -1 && nextOpenDiv < nextCloseDiv) {
+                divNestCount++;
+                divEnd = nextOpenDiv;
+              } else {
+                divNestCount--;
+                divEnd = nextCloseDiv;
+              }
+            }
+            
+            // If we found the closing div, remove the entire summary div
+            if (divEnd > divStart && divNestCount === 0) {
+              contentHtml = html.substring(0, divStart) + html.substring(divEnd + 6); // 6 = "</div>".length
+            }
+          }
+        }
+        
+        // Now extract the actual textual content, preserving ALL content including formatting
+        const plainText = contentHtml
           .replace(/<span class="bg-green-100[^>]*>([\s\S]*?)<\/span>/gi, '$1')
           .replace(/<span class="font-semibold">([\s\S]*?)<\/span>/gi, '$1')
+          .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, '\n\n$1\n')
+          .replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, '\n$1\n')
+          .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
+          .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '• $1\n')
+          .replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, '$1\n')
+          .replace(/<div[^>]*>/gi, '')
+          .replace(/<\/div>/gi, '')
           .replace(/<[^>]*>/g, '')
           .replace(/&nbsp;/g, ' ')
+          .replace(/\n{3,}/g, '\n\n')
           .trim();
+        
+        return plainText;
       };
       
       let exportContent = '';

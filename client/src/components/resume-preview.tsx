@@ -129,6 +129,20 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
         
         {optimizedCV && !hasError && (
           <div id="export-dropdown" className="flex space-x-2">
+            {/* Add Full Copy Button */}
+            <Button
+              className="bg-green-600 px-3 py-1 rounded text-white text-xs flex items-center hover:bg-green-700 transition-colors duration-200"
+              size="sm"
+              onClick={() => handleCopy('text')}
+            >
+              {isCopying === 'text-optimized' ? (
+                <Check className="mr-1 h-3 w-3" />
+              ) : (
+                <Copy className="mr-1 h-3 w-3" />
+              )}
+              Copy Full Resume
+            </Button>
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -213,65 +227,20 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
                 
                 <DropdownMenuSeparator />
                 
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel className="pl-2 pt-2 pb-1 text-xs text-brown-400">Original Resume</DropdownMenuLabel>
-                  
-                  {/* Download options */}
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <Download className="h-4 w-4 mr-2" />
-                      <span>Download as...</span>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem onClick={() => handleExport('text', true)}>
-                        <FileText className="h-4 w-4 mr-2" />
-                        <span>Text (.txt)</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleExport('latex', true)}>
-                        <Code className="h-4 w-4 mr-2" />
-                        <span>LaTeX (.tex)</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleExport('docx', true)}>
-                        <File className="h-4 w-4 mr-2" />
-                        <span>Word-compatible (.html)</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                  
-                  {/* Copy options */}
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <Copy className="h-4 w-4 mr-2" />
-                      <span>Copy as...</span>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem onClick={() => handleCopy('text', true)}>
-                        {isCopying === 'text-original' ? (
-                          <Check className="h-4 w-4 mr-2 text-green-500" />
-                        ) : (
-                          <FileText className="h-4 w-4 mr-2" />
-                        )}
-                        <span>Plain Text</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleCopy('latex', true)}>
-                        {isCopying === 'latex-original' ? (
-                          <Check className="h-4 w-4 mr-2 text-green-500" />
-                        ) : (
-                          <Code className="h-4 w-4 mr-2" />
-                        )}
-                        <span>LaTeX</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleCopy('docx', true)}>
-                        {isCopying === 'docx-original' ? (
-                          <Check className="h-4 w-4 mr-2 text-green-500" />
-                        ) : (
-                          <File className="h-4 w-4 mr-2" />
-                        )}
-                        <span>HTML</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                </DropdownMenuGroup>
+                <DropdownMenuSeparator className="my-2" />
+                
+                {/* JUST COPY THE FULL TEXT - prominent option */}
+                <DropdownMenuItem 
+                  onClick={() => handleCopy('text')} 
+                  className="bg-green-50 font-semibold text-green-900"
+                >
+                  {isCopying === 'text-optimized' ? (
+                    <Check className="h-5 w-5 mr-2 text-green-600" />
+                  ) : (
+                    <Copy className="h-5 w-5 mr-2 text-green-600" />
+                  )}
+                  <span>Copy Complete Optimized Resume as Text</span>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
