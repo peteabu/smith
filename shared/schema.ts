@@ -23,6 +23,10 @@ export const jobDescriptions = pgTable("job_descriptions", {
   id: serial("id").primaryKey(),
   content: text("content").notNull(),
   keywords: jsonb("keywords").$type<string[]>(),
+  roleResearch: text("role_research"), // Additional research about the role
+  industryKeywords: jsonb("industry_keywords").$type<string[]>(), // Industry-specific keywords
+  recruitmentInsights: text("recruitment_insights"), // Insights about recruitment in the industry
+  atsFindings: text("ats_findings"), // Findings about ATS systems for this role
   cvId: integer("cv_id").references(() => cvDocuments.id),
   userId: integer("user_id").references(() => users.id),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
@@ -56,6 +60,10 @@ export const insertCVDocumentSchema = createInsertSchema(cvDocuments).pick({
 export const insertJobDescriptionSchema = createInsertSchema(jobDescriptions).pick({
   content: true,
   keywords: true,
+  roleResearch: true,
+  industryKeywords: true,
+  recruitmentInsights: true,
+  atsFindings: true,
   cvId: true,
   userId: true,
 });

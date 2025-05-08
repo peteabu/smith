@@ -5,6 +5,15 @@ export interface KeywordAnalysisResult {
   keywords: string[];
   content: string;
   id?: number;
+  roleResearch?: string;
+  industryKeywords?: string[];
+  recruitmentInsights?: string;
+  atsFindings?: string;
+  analysisSteps?: {
+    step: string;
+    status: 'completed' | 'in-progress' | 'pending';
+    result?: string;
+  }[];
 }
 
 export interface CvOptimizationResult {
