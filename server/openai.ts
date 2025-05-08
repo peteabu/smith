@@ -17,7 +17,7 @@ export async function extractKeywords(jobDescription: string): Promise<string[]>
         {
           role: "system",
           content: 
-            "You are a career and resume expert. Extract 10-15 important keywords from the job description that would be relevant for an ATS system. Focus on hard skills, technologies, and qualifications. Return only a JSON array of keywords with no explanation.",
+            "You are a career and resume expert. Extract 10-15 important keywords from the job description that would be relevant for an ATS system. Focus on hard skills, technologies, and qualifications. Return a JSON object with a 'keywords' array. Format: { \"keywords\": [\"keyword1\", \"keyword2\", ...] }",
         },
         {
           role: "user",
@@ -27,8 +27,18 @@ export async function extractKeywords(jobDescription: string): Promise<string[]>
       response_format: { type: "json_object" },
     });
 
-    const result = JSON.parse(response.choices[0].message.content);
-    return result.keywords || [];
+    if (!response.choices[0].message.content) {
+      return [];
+    }
+    
+    try {
+      const result = JSON.parse(response.choices[0].message.content);
+      console.log("Extracted keywords:", result.keywords);
+      return Array.isArray(result.keywords) ? result.keywords : [];
+    } catch (parseError) {
+      console.error("Error parsing JSON from OpenAI response:", parseError);
+      return [];
+    }
   } catch (error) {
     console.error("Error using OpenAI for keyword extraction:", error);
     // Fallback to local extraction
@@ -84,7 +94,11 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
             "5. Structure should be clean and minimal\n" +
             "6. Preserve the essential information and style of the original\n" +
             "7. Naturally incorporate missing keywords where relevant without forcing them\n" +
-            "8. Return the optimized CV in HTML format with basic formatting (headers, paragraphs, etc.)",
+            "8. Return the optimized CV in HTML format with basic formatting. Use these specific HTML elements:\n" +
+            "   - For section titles: <h2 class=\"font-display text-lg border-b border-brown/30 pb-2 mb-3\">Title</h2>\n" +
+            "   - For paragraphs: <p class=\"mb-4 text-sm\">Content</p>\n" +
+            "   - For lists: <ul class=\"text-sm list-disc pl-4 space-y-1\"><li>Item</li></ul>\n" +
+            "   - Do NOT include ```html tags or markdown formatting in your response - ONLY return pure HTML",
         },
         {
           role: "user",
@@ -93,7 +107,14 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
       ],
     });
 
-    const optimizedContent = response.choices[0].message.content || originalCV;
+    // Get the optimized content and clean it up
+    let optimizedContent = response.choices[0].message.content || originalCV;
+    
+    // Clean up any markdown formatting that might have been added
+    optimizedContent = optimizedContent
+      .replace(/```html/g, '')
+      .replace(/```/g, '')
+      .trim();
 
     return {
       optimizedContent,
