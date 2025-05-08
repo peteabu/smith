@@ -410,29 +410,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Validate the request
       const validatedData = insertCVDocumentSchema.parse({
-        fileName,
-        fileContent,
-        fileType,
+        fileName: fileName || 'resume.txt',
+        fileContent: fileContent || '',
+        fileType: fileType || 'text/plain',
         extractedText: extractedText || '', // Use provided extracted text or empty string
         userId: null  // Anonymous for now
       });
       
-      // If no extracted text was provided, extract it now
+      // If text content is provided directly, use it as is
       let finalExtractedText = extractedText;
-      if (!finalExtractedText) {
-        // Decode the base64 content
-        const fileBuffer = base64ToBuffer(fileContent);
-        
-        // Extract text from the document
-        if (fileType === 'application/pdf') {
-          finalExtractedText = await extractTextFromPDF(fileBuffer);
-        } else {
-          // For simplicity, we'll just use a placeholder for Word docs
-          finalExtractedText = `Sample extracted text from ${fileName}`;
+      
+      // Only try to extract text if we don't already have it and have file content
+      if (!finalExtractedText && fileContent) {
+        try {
+          // Decode the base64 content
+          const fileBuffer = base64ToBuffer(fileContent);
+          
+          // Extract text from the document
+          if (fileType === 'application/pdf') {
+            finalExtractedText = await extractTextFromPDF(fileBuffer);
+          } else if (fileType === 'text/plain') {
+            // For plain text, just use the content directly (decoded from base64)
+            finalExtractedText = fileBuffer.toString('utf8');
+          } else {
+            // For Word docs or other types
+            finalExtractedText = `Sample extracted text from ${fileName}`;
+          }
+        } catch (err) {
+          console.error('Error extracting text:', err);
+          // If extraction fails, at least use an empty string
+          finalExtractedText = '';
         }
       }
       
-      // Store the CV document
+      // Store the CV document - if no text could be extracted at all, log an error
+      if (!finalExtractedText) {
+        console.warn('No text content available for document');
+      }
+      
       const cvDocument = await storage.createCVDocument({
         ...validatedData,
         extractedText: finalExtractedText
@@ -441,7 +456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json({ 
         id: cvDocument.id,
         fileName: cvDocument.fileName,
-        extractedText: finalExtractedText.substring(0, 200) + '...' // Send back a preview
+        extractedText: finalExtractedText.substring(0, 200) + (finalExtractedText.length > 200 ? '...' : '')
       });
     } catch (error) {
       console.error('Error uploading CV:', error);

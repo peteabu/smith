@@ -99,17 +99,15 @@ export async function previewCVText(
 }
 
 /**
- * Uploads a CV file to the server
+ * Uploads a CV file or text directly to the server
  */
 export async function uploadCV(
   file: File,
-  extractedText: string = ''
+  resumeText: string = ''
 ): Promise<{ id: number; fileName: string }> {
   try {
-    if (extractedText) {
-      // If we have pre-extracted text, use the JSON endpoint with base64 file
-      const fileContent = await fileToBase64(file);
-      
+    // If we're uploading a text resume, prioritize the text content
+    if (resumeText) {
       const response = await fetch('/api/cv/upload', {
         method: 'POST',
         headers: {
@@ -117,9 +115,8 @@ export async function uploadCV(
         },
         body: JSON.stringify({
           fileName: file.name,
-          fileContent,
           fileType: file.type,
-          extractedText
+          extractedText: resumeText // Use the direct text input
         }),
         credentials: 'include',
       });
@@ -130,8 +127,34 @@ export async function uploadCV(
       }
       
       return await response.json();
-    } else {
-      // Use existing FormData approach as fallback
+    } 
+    // If resume text is not provided, use the file
+    else if (file.type === 'application/pdf' || file.type.includes('word')) {
+      // For PDFs and Word docs, convert to base64 and use API that handles extraction
+      const fileContent = await fileToBase64(file);
+      
+      const response = await fetch('/api/cv/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileContent,
+          fileType: file.type
+        }),
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload CV');
+      }
+      
+      return await response.json();
+    }
+    // If it's not a text resume and not a known document type, use the file upload endpoint
+    else {
       const formData = new FormData();
       formData.append('file', file);
       
