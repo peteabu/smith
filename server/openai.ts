@@ -36,7 +36,7 @@ export async function extractKeywords(jobDescription: string): Promise<string[]>
   }
 }
 
-export async function optimizeResume(originalCV: string, keywords: string[]): Promise<{
+export async function optimizeResume(originalCV: string, keywords: string[] | null): Promise<{
   optimizedContent: string;
   matchingKeywords: string[];
   missingKeywords: string[];
@@ -53,7 +53,10 @@ export async function optimizeResume(originalCV: string, keywords: string[]): Pr
     const matchingKeywords: string[] = [];
     const missingKeywords: string[] = [];
     
-    keywords.forEach(keyword => {
+    // Handle null keywords
+    const keywordsArray = keywords || [];
+    
+    keywordsArray.forEach(keyword => {
       if (cvLower.includes(keyword.toLowerCase())) {
         matchingKeywords.push(keyword);
       } else {
@@ -62,7 +65,9 @@ export async function optimizeResume(originalCV: string, keywords: string[]): Pr
     });
     
     // Calculate match rate
-    const matchRate = Math.round((matchingKeywords.length / keywords.length) * 100);
+    const matchRate = keywordsArray.length > 0 
+      ? Math.round((matchingKeywords.length / keywordsArray.length) * 100)
+      : 0;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -83,7 +88,7 @@ export async function optimizeResume(originalCV: string, keywords: string[]): Pr
         },
         {
           role: "user",
-          content: `Here is my original CV:\n\n${originalCV}\n\nHere are the keywords to incorporate (some may already be present):\n${keywords.join(", ")}\n\nMatching keywords already in CV: ${matchingKeywords.join(", ")}\nMissing keywords to add where appropriate: ${missingKeywords.join(", ")}`,
+          content: `Here is my original CV:\n\n${originalCV}\n\nHere are the keywords to incorporate (some may already be present):\n${keywordsArray.join(", ")}\n\nMatching keywords already in CV: ${matchingKeywords.join(", ")}\nMissing keywords to add where appropriate: ${missingKeywords.join(", ")}`,
         },
       ],
     });
@@ -126,7 +131,7 @@ function extractKeywordsLocally(text: string): string[] {
 }
 
 // Fallback optimization function
-function fallbackOptimization(originalCV: string, keywords: string[]): {
+function fallbackOptimization(originalCV: string, keywords: string[] | null): {
   optimizedContent: string;
   matchingKeywords: string[];
   missingKeywords: string[];
@@ -137,7 +142,10 @@ function fallbackOptimization(originalCV: string, keywords: string[]): {
   const matchingKeywords: string[] = [];
   const missingKeywords: string[] = [];
   
-  keywords.forEach(keyword => {
+  // Handle null keywords
+  const keywordsArray = keywords || [];
+  
+  keywordsArray.forEach(keyword => {
     if (cvLower.includes(keyword.toLowerCase())) {
       matchingKeywords.push(keyword);
     } else {
@@ -146,7 +154,9 @@ function fallbackOptimization(originalCV: string, keywords: string[]): {
   });
   
   // Calculate match rate
-  const matchRate = Math.round((matchingKeywords.length / keywords.length) * 100);
+  const matchRate = keywordsArray.length > 0 
+    ? Math.round((matchingKeywords.length / keywordsArray.length) * 100)
+    : 0;
   
   // Generate HTML content from original CV
   const paragraphs = originalCV.split('\n\n');

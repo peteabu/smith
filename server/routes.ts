@@ -16,6 +16,7 @@ import { execSync } from "child_process";
 import natural from "natural";
 import PDFDocument from "pdfkit";
 import pdfParse from "./pdf-parser";
+import * as openaiService from "./openai";
 
 // Configure multer for memory storage
 const upload = multer({ storage: multer.memoryStorage() });
@@ -287,8 +288,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = analyzeJobDescriptionSchema.parse(req.body);
       const { jobDescription, cvId } = validatedData;
       
-      // Extract keywords from job description
-      const keywords = extractKeywords(jobDescription);
+      // Extract keywords from job description using OpenAI if API key available
+      let keywords: string[] = [];
+      try {
+        // Try to use OpenAI for more accurate keyword extraction
+        keywords = await openaiService.extractKeywords(jobDescription);
+      } catch (aiError) {
+        console.warn('Using fallback keyword extraction:', aiError);
+        // Fallback to local extraction method
+        keywords = extractKeywords(jobDescription);
+      }
       
       // Store the job description
       const jobDescriptionData = await storage.createJobDescription({
@@ -342,11 +351,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Optimize the CV
-      const optimization = optimizeCV(
-        cv.extractedText || '',
-        jobDescription.keywords || []
-      );
+      // Optimize the CV using OpenAI if API key available
+      let optimization;
+      try {
+        // Try to use OpenAI for more sophisticated optimization
+        optimization = await openaiService.optimizeResume(
+          cv.extractedText || '',
+          jobDescription.keywords || []
+        );
+      } catch (aiError) {
+        console.warn('Using fallback CV optimization:', aiError);
+        // Fallback to local optimization method
+        optimization = optimizeCV(
+          cv.extractedText || '',
+          jobDescription.keywords || []
+        );
+      }
       
       // Store the optimized CV
       const optimizedCV = await storage.createOptimizedCV({
