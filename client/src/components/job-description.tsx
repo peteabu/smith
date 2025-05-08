@@ -41,6 +41,21 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
     setIsAnalyzing(true);
     try {
       const result = await analyzeJobDescription(value, cvId || undefined);
+      
+      // Check if web search was used
+      const hasWebSearch = result.webSearchResults && 
+        (result.webSearchResults.role?.length || 
+         result.webSearchResults.industry?.length || 
+         result.webSearchResults.recruitment?.length || 
+         result.webSearchResults.ats?.length);
+      
+      toast({
+        title: "Analysis Complete",
+        description: hasWebSearch 
+          ? `Identified ${result.keywords.length} keywords with web-enhanced research.` 
+          : `Identified ${result.keywords.length} keywords for your resume.`,
+      });
+      
       onAnalysisComplete(result);
     } catch (error) {
       toast({

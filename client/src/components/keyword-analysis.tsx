@@ -198,6 +198,142 @@ export function KeywordAnalysis({ analysis, optimization }: KeywordAnalysisProps
           </div>
         </TabsContent>
         
+        {/* Sources Tab */}
+        <TabsContent value="sources" className="space-y-4">
+          {webSearchResults ? (
+            <div className="space-y-6">
+              {webSearchResults.role && webSearchResults.role.length > 0 && (
+                <div>
+                  <h3 className="font-mono text-sm border-b border-brown/20 pb-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <Target className="h-4 w-4 text-blue-500" />
+                      Role Research Sources
+                    </div>
+                  </h3>
+                  <div className="space-y-3">
+                    {webSearchResults.role.map((source, index) => (
+                      <div key={index} className="bg-cream p-3 rounded-md border border-cream-dark">
+                        <a 
+                          href={source.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="font-medium text-blue-600 hover:underline mb-1 block"
+                        >
+                          {source.title || source.url}
+                        </a>
+                        <p className="text-xs text-gray-600 mb-2 truncate">{source.url}</p>
+                        {source.snippet && (
+                          <p className="text-sm">{source.snippet}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {webSearchResults.industry && webSearchResults.industry.length > 0 && (
+                <div>
+                  <h3 className="font-mono text-sm border-b border-brown/20 pb-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <Target className="h-4 w-4 text-green-500" />
+                      Industry Keyword Sources
+                    </div>
+                  </h3>
+                  <div className="space-y-3">
+                    {webSearchResults.industry.map((source, index) => (
+                      <div key={index} className="bg-cream p-3 rounded-md border border-cream-dark">
+                        <a 
+                          href={source.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="font-medium text-blue-600 hover:underline mb-1 block"
+                        >
+                          {source.title || source.url}
+                        </a>
+                        <p className="text-xs text-gray-600 mb-2 truncate">{source.url}</p>
+                        {source.snippet && (
+                          <p className="text-sm">{source.snippet}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {webSearchResults.recruitment && webSearchResults.recruitment.length > 0 && (
+                <div>
+                  <h3 className="font-mono text-sm border-b border-brown/20 pb-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <Target className="h-4 w-4 text-amber-500" />
+                      Recruitment Practice Sources
+                    </div>
+                  </h3>
+                  <div className="space-y-3">
+                    {webSearchResults.recruitment.map((source, index) => (
+                      <div key={index} className="bg-cream p-3 rounded-md border border-cream-dark">
+                        <a 
+                          href={source.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="font-medium text-blue-600 hover:underline mb-1 block"
+                        >
+                          {source.title || source.url}
+                        </a>
+                        <p className="text-xs text-gray-600 mb-2 truncate">{source.url}</p>
+                        {source.snippet && (
+                          <p className="text-sm">{source.snippet}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {webSearchResults.ats && webSearchResults.ats.length > 0 && (
+                <div>
+                  <h3 className="font-mono text-sm border-b border-brown/20 pb-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <Target className="h-4 w-4 text-purple-500" />
+                      ATS Optimization Sources
+                    </div>
+                  </h3>
+                  <div className="space-y-3">
+                    {webSearchResults.ats.map((source, index) => (
+                      <div key={index} className="bg-cream p-3 rounded-md border border-cream-dark">
+                        <a 
+                          href={source.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="font-medium text-blue-600 hover:underline mb-1 block"
+                        >
+                          {source.title || source.url}
+                        </a>
+                        <p className="text-xs text-gray-600 mb-2 truncate">{source.url}</p>
+                        {source.snippet && (
+                          <p className="text-sm">{source.snippet}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {(!webSearchResults.role || webSearchResults.role.length === 0) &&
+               (!webSearchResults.industry || webSearchResults.industry.length === 0) &&
+               (!webSearchResults.recruitment || webSearchResults.recruitment.length === 0) &&
+               (!webSearchResults.ats || webSearchResults.ats.length === 0) && (
+                <div className="text-center py-8">
+                  <p className="text-sm text-gray-500">No web search sources were used in this analysis.</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-sm text-gray-500">No web search results available for this analysis.</p>
+            </div>
+          )}
+        </TabsContent>
+        
         {/* Process Tab */}
         <TabsContent value="process" className="space-y-4">
           {analysisSteps && analysisSteps.length > 0 ? (
@@ -208,11 +344,36 @@ export function KeywordAnalysis({ analysis, optimization }: KeywordAnalysisProps
                     <div className="flex items-center gap-2">
                       {getStepStatusBadge(step.status)}
                       <span>{step.step}</span>
+                      {step.sources && step.sources.length > 0 && (
+                        <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">
+                          {step.sources.length} sources
+                        </span>
+                      )}
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
                     <div className="bg-cream p-3 rounded text-sm whitespace-pre-line">
                       {step.result || "No details available for this step."}
+                      
+                      {step.sources && step.sources.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-brown/10">
+                          <p className="font-medium text-xs mb-2">Sources:</p>
+                          <ul className="list-disc pl-5 space-y-1 text-xs">
+                            {step.sources.map((source, idx) => (
+                              <li key={idx}>
+                                <a 
+                                  href={source} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:underline break-all"
+                                >
+                                  {source}
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   </AccordionContent>
                 </AccordionItem>
