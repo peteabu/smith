@@ -17,7 +17,22 @@ export async function extractKeywords(jobDescription: string): Promise<string[]>
         {
           role: "system",
           content: 
-            "You are a career and resume expert. Extract 10-15 important keywords from the job description that would be relevant for an ATS system. Focus on hard skills, technologies, and qualifications. Return a JSON object with a 'keywords' array. Format: { \"keywords\": [\"keyword1\", \"keyword2\", ...] }",
+            "You are an expert talent-acquisition analyst who optimizes résumés for applicant-tracking systems (ATS).\n\n" +
+            "TASK\n" +
+            "1. Read the job description enclosed in triple back-ticks.\n" +
+            "2. Produce a JSON object with exactly these top-level keys:\n\n" +
+            "   \"Core_Hard_Skills\": list (8-12) of concrete technical skills, tools, or methodologies.\n" +
+            "   \"Core_Soft_Skills\": list (6-10) of interpersonal / leadership competencies.\n" +
+            "   \"Domain_Knowledge\": list of industry-specific terms, regulations, or frameworks.\n" +
+            "   \"Certifications_Education\": list of degrees, licenses, or certificates explicitly mentioned.\n" +
+            "   \"Experience_Level\": list of phrases that signal seniority or years of experience.\n" +
+            "   \"Keywords_Ranked\": array of up to 25 objects, each object = \n" +
+            "      { \"keyword\": term,\n" +
+            "        \"category\": one of [Hard, Soft, Domain, Cert/Edu, Exp],\n" +
+            "        \"rationale\": ≤ 10-word note why it matters }\n" +
+            "      Ordered by descending relevance (1 = most critical).\n\n" +
+            "3. Only surface terms that appear verbatim or are unmistakably implied.\n" +
+            "4. Retain original spelling/casing; one word or phrase per list item.",
         },
         {
           role: "user",
