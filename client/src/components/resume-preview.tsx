@@ -18,8 +18,18 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
     setIsDownloading(format === 'pdf' ? 'standard' : 'latex');
     
     try {
-      // Direct approach - navigate to the download URL
-      window.open(`/api/cv/download/${optimizedCV.id}?format=${format}`, '_blank');
+      // Use iframe to avoid browser blocking the download
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+      
+      // Set the source to the download endpoint
+      iframe.src = `/api/cv/download/${optimizedCV.id}?format=${format}`;
+      
+      // Remove iframe after a timeout
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 5000);
       
       toast({
         title: "Download started",
@@ -27,32 +37,15 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
       });
     } catch (error) {
       console.error('Download error:', error);
-      
-      // Fallback approach if the direct download fails
-      try {
-        const downloadUrl = await downloadOptimizedCV(optimizedCV.id, format);
-        
-        // Create a temporary link element to trigger the download
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = `optimized-cv-${new Date().toISOString().slice(0, 10)}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        toast({
-          title: "Download started (fallback)",
-          description: `Your optimized CV is downloading in ${format === 'latex' ? 'LaTeX' : 'standard'} format`,
-        });
-      } catch (fallbackError) {
-        toast({
-          title: "Download failed",
-          description: error instanceof Error ? error.message : "Failed to download CV",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Download failed",
+        description: "Failed to download CV. Please try again.",
+        variant: "destructive",
+      });
     } finally {
-      setIsDownloading(null);
+      setTimeout(() => {
+        setIsDownloading(null);
+      }, 1500); // Slight delay to show loading status
     }
   };
 

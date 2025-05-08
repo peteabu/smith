@@ -167,6 +167,43 @@ export async function optimizeResume(originalCV: string, keywords: string[] | nu
       .replace(/```html/g, '')
       .replace(/```/g, '')
       .trim();
+      
+    // Remove any full HTML document structure if present
+    optimizedContent = optimizedContent
+      .replace(/<!DOCTYPE.*?>/i, '')
+      .replace(/<html.*?>[\s\S]*?<head>[\s\S]*?<\/head>[\s\S]*?<body>/i, '')
+      .replace(/<\/body>[\s\S]*?<\/html>/i, '');
+      
+    // Ensure proper section headings
+    if (!optimizedContent.includes('<h')) {
+      // If no headings at all, add some basic structure
+      const parts = optimizedContent.split('\n\n').filter(p => p.trim());
+      
+      // Reset content and build structured version
+      optimizedContent = '';
+      
+      // Look for potential sections
+      const sectionKeywords = ['experience', 'education', 'skills', 'profile', 'summary', 'objective', 'projects'];
+      let inSection = false;
+      
+      parts.forEach(part => {
+        const partLower = part.toLowerCase();
+        const isSectionHeader = sectionKeywords.some(keyword => partLower.includes(keyword)) && 
+                              part.length < 50;
+        
+        if (isSectionHeader) {
+          optimizedContent += `<h2 class="font-display text-lg border-b border-brown/30 pb-2 mb-3">${part}</h2>\n\n`;
+          inSection = true;
+        } else if (part.includes('•') || part.includes('-')) {
+          // Convert bullet point text to list
+          const items = part.split(/\n[•-]\s+/).filter(item => item.trim());
+          const listItems = items.map(item => `<li>${item.trim()}</li>`).join('\n');
+          optimizedContent += `<ul class="text-sm list-disc pl-4 space-y-1">${listItems}</ul>\n\n`;
+        } else {
+          optimizedContent += `<p class="mb-4 text-sm">${part}</p>\n\n`;
+        }
+      });
+    }
 
     return {
       optimizedContent,

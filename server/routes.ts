@@ -77,12 +77,12 @@ function createPDF(content: string, format: 'pdf' | 'latex' = 'pdf'): Buffer {
   }
   
   // Extract paragraphs
-  const paragraphRegex = /<p[^>]*>(.*?)<\/p>/gis;
+  const paragraphRegex = /<p[^>]*>([\s\S]*?)<\/p>/gi;
   let paragraphMatch;
   while ((paragraphMatch = paragraphRegex.exec(content)) !== null) {
     let paragraph = paragraphMatch[1]
-      .replace(/<span class="bg-green-100 px-1">(.*?)<\/span>/gi, '$1')
-      .replace(/<span class="font-semibold">(.*?)<\/span>/gi, '$1')
+      .replace(/<span class="bg-green-100 px-1">([\s\S]*?)<\/span>/gi, '$1')
+      .replace(/<span class="font-semibold">([\s\S]*?)<\/span>/gi, '$1')
       .replace(/<[^>]*>/g, '')
       .trim();
     
@@ -90,12 +90,12 @@ function createPDF(content: string, format: 'pdf' | 'latex' = 'pdf'): Buffer {
   }
   
   // Extract list items
-  const listItemRegex = /<li[^>]*>(.*?)<\/li>/gis;
+  const listItemRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
   let listItemMatch;
   while ((listItemMatch = listItemRegex.exec(content)) !== null) {
     let listItem = listItemMatch[1]
-      .replace(/<span class="bg-green-100 px-1">(.*?)<\/span>/gi, '$1')
-      .replace(/<span class="font-semibold">(.*?)<\/span>/gi, '$1')
+      .replace(/<span class="bg-green-100 px-1">([\s\S]*?)<\/span>/gi, '$1')
+      .replace(/<span class="font-semibold">([\s\S]*?)<\/span>/gi, '$1')
       .replace(/<[^>]*>/g, '')
       .trim();
     
