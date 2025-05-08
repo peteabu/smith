@@ -1,7 +1,7 @@
 import { CvOptimizationResult, downloadOptimizedCV } from "@/lib/cv-analyzer";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Download, FileCode, FileText, Code, File } from "lucide-react";
+import { Download, FileCode, FileText, Code, File, FileClock } from "lucide-react";
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -10,6 +10,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 
 interface ResumePreviewProps {
@@ -20,7 +26,7 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState<'text' | 'latex' | 'docx' | null>(null);
 
-  const handleExport = async (format: 'text' | 'latex' | 'docx') => {
+  const handleExport = async (format: 'text' | 'latex' | 'docx', useOriginal: boolean = false) => {
     if (!optimizedCV?.id) return;
     
     setIsExporting(format);
@@ -31,8 +37,8 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
       iframe.style.display = 'none';
       document.body.appendChild(iframe);
       
-      // Set the source to the export endpoint
-      iframe.src = `/api/cv/export/${optimizedCV.id}?format=${format}`;
+      // Set the source to the export endpoint with original flag if needed
+      iframe.src = `/api/cv/export/${optimizedCV.id}?format=${format}${useOriginal ? '&original=true' : ''}`;
       
       // Remove iframe after a timeout
       setTimeout(() => {
@@ -43,9 +49,11 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
       if (format === 'latex') formatName = 'LaTeX';
       if (format === 'docx') formatName = 'Word-compatible HTML';
       
+      const cvType = useOriginal ? 'original' : 'optimized';
+      
       toast({
         title: "Export started",
-        description: `Your optimized CV is exporting as ${formatName}`,
+        description: `Your ${cvType} CV is exporting as ${formatName}`,
       });
     } catch (error) {
       console.error('Export error:', error);
@@ -95,18 +103,40 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Export Options</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => handleExport('text')}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  <span>Text (.txt)</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('latex')}>
-                  <Code className="h-4 w-4 mr-2" />
-                  <span>LaTeX (.tex)</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('docx')}>
-                  <File className="h-4 w-4 mr-2" />
-                  <span>Word-compatible (.html)</span>
-                </DropdownMenuItem>
+                
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="pl-2 pt-2 pb-1 text-xs text-brown-400">Optimized Resume</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => handleExport('text')}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    <span>Text (.txt)</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('latex')}>
+                    <Code className="h-4 w-4 mr-2" />
+                    <span>LaTeX (.tex)</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('docx')}>
+                    <File className="h-4 w-4 mr-2" />
+                    <span>Word-compatible (.html)</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                
+                <DropdownMenuSeparator />
+                
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="pl-2 pt-2 pb-1 text-xs text-brown-400">Original Resume</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => handleExport('text', true)}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    <span>Text (.txt)</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('latex', true)}>
+                    <Code className="h-4 w-4 mr-2" />
+                    <span>LaTeX (.tex)</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('docx', true)}>
+                    <File className="h-4 w-4 mr-2" />
+                    <span>Word-compatible (.html)</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

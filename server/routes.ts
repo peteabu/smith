@@ -570,8 +570,9 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const optimizedCvId = parseInt(req.params.id);
       const format = (req.query.format as 'text' | 'latex' | 'docx') || 'text';
+      const useOriginal = req.query.original === 'true'; // Option to get original CV content
       
-      console.log(`CV Export requested - ID: ${optimizedCvId}, Format: ${format}`);
+      console.log(`CV Export requested - ID: ${optimizedCvId}, Format: ${format}, Use Original: ${useOriginal}`);
       
       // Get the optimized CV
       const optimizedCV = await storage.getOptimizedCV(optimizedCvId);
@@ -585,14 +586,22 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       // Get the original CV if available
       let cv = null;
+      let contentToUse = optimizedCV.content || '';
+      
       if (optimizedCV.cvId !== null) {
         cv = await storage.getCVDocument(optimizedCV.cvId);
         console.log(`Found original CV - ID: ${cv?.id}, Text length: ${cv?.extractedText?.length || 0} characters`);
+        
+        // If useOriginal flag is true and we have the original text, use it instead
+        if (useOriginal && cv && cv.extractedText) {
+          contentToUse = `<div>${cv.extractedText.replace(/\n/g, '</p><p>')}</div>`;
+          console.log(`Using original CV content for export - Length: ${cv.extractedText.length} characters`);
+        }
       }
       
       // Make sure we have content to generate the export
-      if (!optimizedCV.content || optimizedCV.content.trim().length === 0) {
-        console.error("Optimized CV content is empty, generating fallback content");
+      if (!contentToUse || contentToUse.trim().length === 0) {
+        console.error("CV content is empty, generating fallback content");
         
         // Generate a minimal fallback content
         let fallbackContent = '<h2>Resume Content</h2>';
@@ -602,7 +611,7 @@ export async function registerRoutes(app: Express): Promise<void> {
           fallbackContent += '<p>No content available for this resume.</p>';
         }
         
-        optimizedCV.content = fallbackContent;
+        contentToUse = fallbackContent;
       }
       
       // Clean HTML content
@@ -617,11 +626,12 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       let exportContent = '';
       let mimeType = 'text/plain';
-      let filename = `optimized-cv-${new Date().toISOString().slice(0, 10)}`;
+      const filePrefix = useOriginal ? 'original' : 'optimized';
+      let filename = `${filePrefix}-cv-${new Date().toISOString().slice(0, 10)}`;
       
       if (format === 'latex') {
         // Extract sections and create LaTeX formatted text
-        const plainText = cleanText(optimizedCV.content);
+        const plainText = cleanText(contentToUse);
         
         exportContent = `\\documentclass{article}
 \\usepackage[utf8]{inputenc}
@@ -656,7 +666,7 @@ ${plainText.split('\n\n').map(paragraph => {
         exportContent = `<html>
 <head>
   <meta charset="UTF-8">
-  <title>Optimized Resume</title>
+  <title>Professional Resume</title>
   <style>
     body { font-family: Arial, sans-serif; }
     h1, h2, h3 { font-weight: bold; }
@@ -665,7 +675,7 @@ ${plainText.split('\n\n').map(paragraph => {
 </head>
 <body>
   <h1>Professional Resume</h1>
-  ${optimizedCV.content
+  ${contentToUse
     .replace(/<span class="bg-green-100[^>]*>([\s\S]*?)<\/span>/gi, '<span class="highlight">$1</span>')
     .replace(/<div class="[^"]*">/gi, '<div>')
   }
@@ -676,7 +686,7 @@ ${plainText.split('\n\n').map(paragraph => {
         filename += '.html'; // Word can open HTML files
       } else {
         // Default to plain text
-        exportContent = cleanText(optimizedCV.content);
+        exportContent = cleanText(contentToUse);
         filename += '.txt';
       }
       
