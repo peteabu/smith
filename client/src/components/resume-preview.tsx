@@ -18,26 +18,39 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
     setIsDownloading(format === 'pdf' ? 'standard' : 'latex');
     
     try {
-      const downloadUrl = await downloadOptimizedCV(optimizedCV.id, format);
-      
-      // Create a temporary link element to trigger the download
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `optimized-cv.${format === 'latex' ? 'pdf' : 'pdf'}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Direct approach - navigate to the download URL
+      window.open(`/api/cv/download/${optimizedCV.id}?format=${format}`, '_blank');
       
       toast({
         title: "Download started",
         description: `Your optimized CV is downloading in ${format === 'latex' ? 'LaTeX' : 'standard'} format`,
       });
     } catch (error) {
-      toast({
-        title: "Download failed",
-        description: error instanceof Error ? error.message : "Failed to download CV",
-        variant: "destructive",
-      });
+      console.error('Download error:', error);
+      
+      // Fallback approach if the direct download fails
+      try {
+        const downloadUrl = await downloadOptimizedCV(optimizedCV.id, format);
+        
+        // Create a temporary link element to trigger the download
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `optimized-cv-${new Date().toISOString().slice(0, 10)}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast({
+          title: "Download started (fallback)",
+          description: `Your optimized CV is downloading in ${format === 'latex' ? 'LaTeX' : 'standard'} format`,
+        });
+      } catch (fallbackError) {
+        toast({
+          title: "Download failed",
+          description: error instanceof Error ? error.message : "Failed to download CV",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsDownloading(null);
     }

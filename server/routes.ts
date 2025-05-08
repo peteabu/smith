@@ -437,7 +437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/cv/download/:id', async (req: Request, res: Response) => {
     try {
       const optimizedCvId = parseInt(req.params.id);
-      const format = req.query.format as 'pdf' | 'latex' || 'pdf';
+      const format = (req.query.format as 'pdf' | 'latex') || 'pdf';
       
       // Get the optimized CV
       const optimizedCV = await storage.getOptimizedCV(optimizedCvId);
@@ -446,12 +446,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'Optimized CV not found' });
       }
       
+      // Get the original CV if available
+      let cv = null;
+      if (optimizedCV.cvId !== null) {
+        cv = await storage.getCVDocument(optimizedCV.cvId);
+      }
+      
+      // Get the job description if available
+      let jobDescription = null;
+      if (optimizedCV.jobDescriptionId !== null) {
+        jobDescription = await storage.getJobDescription(optimizedCV.jobDescriptionId);
+      }
+      
       // Generate PDF from the optimized content
+      const filename = `optimized-cv-${new Date().toISOString().slice(0, 10)}.pdf`;
       const pdfBuffer = createPDF(optimizedCV.content, format);
       
       // Set headers for file download
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename=optimized-cv.pdf`);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Cache-Control', 'no-cache');
       
       // Send the PDF
       res.send(pdfBuffer);
