@@ -915,6 +915,7 @@ function fallbackOptimization(originalCV: string, keywords: string[] | null): {
   matchingKeywords: string[];
   missingKeywords: string[];
   matchRate: number;
+  markdownContent?: string;
 } {
   // Find which keywords are present in the original CV
   const cvLower = originalCV.toLowerCase();
@@ -1027,6 +1028,7 @@ function fallbackOptimization(originalCV: string, keywords: string[] | null): {
     optimizedContent,
     matchingKeywords,
     missingKeywords: stillMissingKeywords,
-    matchRate
+    matchRate,
+    markdownContent: optimizedText // Use the optimized text as markdown content
   };
 }

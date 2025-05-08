@@ -554,7 +554,8 @@ export async function registerRoutes(app: Express): Promise<void> {
         optimizedContent: optimization.optimizedContent,
         matchRate: optimization.matchRate,
         matchingKeywords: optimization.matchingKeywords,
-        missingKeywords: optimization.missingKeywords
+        missingKeywords: optimization.missingKeywords,
+        markdownContent: optimization.markdownContent || ''
       });
     } catch (error) {
       console.error('Error optimizing CV:', error);
