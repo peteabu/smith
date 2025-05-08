@@ -1,0 +1,161 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 20 14.3% 4.1%;
+  --muted: 60 4.8% 95.9%;
+  --muted-foreground: 25 5.3% 44.7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 20 14.3% 4.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 20 14.3% 4.1%;
+  --border: 20 5.9% 90%;
+  --input: 20 5.9% 90%;
+  --primary: 207 90% 54%;
+  --primary-foreground: 211 100% 99%;
+  --secondary: 60 4.8% 95.9%;
+  --secondary-foreground: 24 9.8% 10%;
+  --accent: 60 4.8% 95.9%;
+  --accent-foreground: 24 9.8% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 60 9.1% 97.8%;
+  --ring: 20 14.3% 4.1%;
+  --radius: 0.5rem;
+  
+  /* Custom colors for CV Optimizer */
+  --paper: 39 25% 88%;
+  --cream: 40 33% 96%;
+  --brown-light: 43 27% 75%;
+  --brown: 35 24% 48%;
+  --brown-dark: 33 24% 30%;
+  --moss-light: 142 16% 51%;
+  --moss: 147 13% 23%;
+  --moss-dark: 157 11% 15%;
+  
+  /* Chart colors */
+  --chart-1: 142 76% 36%;
+  --chart-2: 0 84% 60%;
+  --chart-3: 217 91% 60%;
+  --chart-4: 47 89% 58%;
+  --chart-5: 283 39% 53%;
+}
+
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --primary: 207 90% 54%;
+  --primary-foreground: 211 100% 99%;
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 240 4.9% 83.9%;
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-serif antialiased bg-cream text-moss-dark;
+  }
+}
+
+@layer utilities {
+  .bg-paper {
+    @apply bg-[#E8E1D9];
+  }
+  
+  .bg-cream {
+    @apply bg-[#F9F6F1];
+  }
+  
+  .text-brown {
+    @apply text-[#8B7D6B];
+  }
+  
+  .text-brown-dark {
+    @apply text-[#5D4E3C];
+  }
+  
+  .text-moss-dark {
+    @apply text-[#1E2D24];
+  }
+  
+  .bg-moss {
+    @apply bg-[#34423B];
+  }
+  
+  .bg-moss-dark {
+    @apply bg-[#1E2D24];
+  }
+  
+  .bg-brown {
+    @apply bg-[#8B7D6B];
+  }
+  
+  .border-brown {
+    @apply border-[#8B7D6B];
+  }
+  
+  .bg-brown-dark {
+    @apply bg-[#5D4E3C];
+  }
+  
+  .bg-paper-texture {
+    background-image: url('https://images.unsplash.com/photo-1533035353720-f1c6a75cd8ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');
+    background-size: cover;
+  }
+  
+  .paper-shadow {
+    box-shadow: 0 1px 2px rgba(0,0,0,0.07), 
+                0 2px 4px rgba(0,0,0,0.07), 
+                0 4px 8px rgba(0,0,0,0.07),
+                0 8px 16px rgba(0,0,0,0.07);
+  }
+  
+  .typewriter-cursor {
+    position: relative;
+  }
+  
+  .typewriter-cursor::after {
+    content: '|';
+    animation: blink 1s step-end infinite;
+    position: absolute;
+  }
+  
+  @keyframes blink {
+    from, to { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  
+  .file-drop-active {
+    @apply border-[#8B7D6B] bg-[#8B7D6B]/10;
+  }
+  
+  .font-mono {
+    font-family: 'Courier Prime', monospace;
+  }
+  
+  .font-display {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  .font-serif {
+    font-family: 'Source Serif Pro', serif;
+  }
+}
