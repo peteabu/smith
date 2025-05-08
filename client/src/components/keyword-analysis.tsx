@@ -99,7 +99,7 @@ export function KeywordAnalysis({ analysis, optimization, showFull = false }: Ke
                     </div>
                     <Progress 
                       value={(optimization.matchingKeywords.length / keywords.length) * 100} 
-                      className="h-2 bg-paper" 
+                      className="h-2 bg-cream overflow-hidden rounded" 
                     />
                   </div>
                   <div className="text-sm">
@@ -111,7 +111,7 @@ export function KeywordAnalysis({ analysis, optimization, showFull = false }: Ke
                     </div>
                     <Progress 
                       value={(optimization.missingKeywords.length / keywords.length) * 100} 
-                      className="h-2 bg-paper" 
+                      className="h-2 bg-cream overflow-hidden rounded" 
                       indicatorClassName="bg-red-500"
                     />
                   </div>
@@ -187,7 +187,7 @@ export function KeywordAnalysis({ analysis, optimization, showFull = false }: Ke
                   </div>
                   <Progress 
                     value={(optimization.matchingKeywords.length / keywords.length) * 100} 
-                    className="h-2 bg-paper" 
+                    className="h-2 bg-cream overflow-hidden rounded" 
                   />
                 </div>
 
@@ -200,7 +200,7 @@ export function KeywordAnalysis({ analysis, optimization, showFull = false }: Ke
                   </div>
                   <Progress 
                     value={(optimization.missingKeywords.length / keywords.length) * 100} 
-                    className="h-2 bg-paper" 
+                    className="h-2 bg-cream overflow-hidden rounded" 
                     indicatorClassName="bg-red-500"
                   />
                 </div>

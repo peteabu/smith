@@ -187,9 +187,9 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
               <span className="text-xs text-brown">{calculateProgress()}%</span>
             </div>
             
-            <div className="relative h-2 bg-paper border border-brown/30 rounded-full overflow-hidden">
+            <div className="relative h-2 w-full bg-paper border border-brown/30 rounded-full overflow-hidden">
               <div 
-                className="absolute top-0 left-0 h-full bg-brown/40 transition-all duration-300"
+                className="absolute top-0 left-0 h-full bg-brown/40 transition-all duration-500 ease-in-out"
                 style={{ width: `${calculateProgress()}%` }}
               ></div>
             </div>

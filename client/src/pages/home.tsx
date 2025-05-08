@@ -119,9 +119,9 @@ export default function Home() {
               <h2 className="font-display text-xl text-brown-dark">Your Progress</h2>
               <span className="text-sm font-mono text-brown bg-paper px-2 py-1 border border-brown/30">{calculateProgress()}%</span>
             </div>
-            <div className="relative h-2 bg-paper-texture border border-brown/30">
+            <div className="relative h-2 w-full bg-paper-texture border border-brown/30 overflow-hidden">
               <div 
-                className="absolute top-0 left-0 h-full bg-brown/40 transition-all duration-300 ease-in-out"
+                className="absolute top-0 left-0 h-full bg-brown/40 transition-all duration-500 ease-in-out"
                 style={{ width: `${calculateProgress()}%` }}
               />
             </div>
