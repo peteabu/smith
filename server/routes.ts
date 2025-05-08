@@ -473,12 +473,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = analyzeJobDescriptionSchema.parse(req.body);
       const { jobDescription, cvId } = validatedData;
       
+      console.log("Starting job description analysis...");
+      
+      // Check if OpenAI API key is available
+      if (!process.env.OPENAI_API_KEY) {
+        console.error("OPENAI_API_KEY is not set. Using fallback analysis.");
+      } else {
+        console.log("OPENAI_API_KEY is set and available for use");
+      }
+      
       // Use the multi-step analysis approach
       let analysisResult: openaiService.JobAnalysisResult;
       try {
+        console.log("Starting multi-step analysis with OpenAI...");
         analysisResult = await openaiService.analyzeJobDescriptionMultiStep(jobDescription);
+        console.log("Multi-step analysis completed successfully");
       } catch (aiError) {
-        console.warn('Error in multi-step analysis, using fallback extraction:', aiError);
+        console.error('Error in multi-step analysis, using fallback extraction:', aiError);
         // Fallback to basic extraction
         const keywords = extractKeywords(jobDescription);
         analysisResult = {
@@ -532,13 +543,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = optimizeCVSchema.parse(req.body);
       const { cvId, jobDescriptionId } = validatedData;
       
+      console.log(`Starting resume optimization for CV ID ${cvId} and Job Description ID ${jobDescriptionId}...`);
+      
       // Get CV and job description
       const cv = await storage.getCVDocument(cvId);
       const jobDescription = await storage.getJobDescription(jobDescriptionId);
       
       if (!cv || !jobDescription) {
+        console.error(`CV (${cvId}) or job description (${jobDescriptionId}) not found`);
         return res.status(404).json({ error: 'CV or job description not found' });
       }
+      
+      console.log(`Found CV and job description. CV text length: ${cv.extractedText?.length || 0}, Keywords count: ${jobDescription.keywords?.length || 0}`);
       
       // Check if we already have an optimized version
       const existingOptimizedCV = await storage.getOptimizedCVByJobAndDocument(
@@ -547,6 +563,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       if (existingOptimizedCV) {
+        console.log(`Found existing optimized CV (ID: ${existingOptimizedCV.id}), returning it`);
+        
         // Generate matching and missing keywords on the fly
         const cvLower = cv.extractedText?.toLowerCase() || "";
         const matchingKeywords: string[] = [];
@@ -569,17 +587,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Check if OpenAI API key is available
+      if (!process.env.OPENAI_API_KEY) {
+        console.error("OPENAI_API_KEY is not set for resume optimization");
+      } else {
+        console.log("OPENAI_API_KEY is set and available for resume optimization");
+      }
+      
       // Optimize the CV using OpenAI if API key available
       let optimization;
       try {
+        console.log("Starting resume optimization with OpenAI...");
         // Try to use OpenAI for more sophisticated optimization
         optimization = await openaiService.optimizeResume(
           cv.extractedText || '',
           jobDescription.keywords || []
         );
+        console.log(`Resume optimization complete. Match rate: ${optimization.matchRate}%`);
       } catch (aiError) {
-        console.warn('Using fallback CV optimization:', aiError);
+        console.error('Error using OpenAI for resume optimization:', aiError);
         // Fallback to local optimization method
+        console.log("Using fallback CV optimization method");
         optimization = optimizeCV(
           cv.extractedText || '',
           jobDescription.keywords || []
