@@ -78,8 +78,16 @@ export default async function parsePdf(buffer: Buffer): Promise<PDFData> {
           /\(([^)]{2,})\)/g,
           // Tj pattern in PDF content
           /\([^)]+\)\s*Tj/g,
-          // BT...ET text blocks (Beginning/End Text) - using pre-ES2018 compatible regex
-          /BT\s*([\s\S]*?)\s*ET/g
+          // BT...ET text blocks (Beginning/End Text)
+          /BT\s*([\s\S]*?)\s*ET/g,
+          // Look for CMR font entries (common in LaTeX)
+          /\/([CT]m[rbi]\d+)\s+\d+\s+Tf/g,
+          // Text inside square brackets with LaTeX commands
+          /\\text\{([^}]+)\}/g,
+          // LaTeX title, author, section patterns
+          /\\(?:title|author|section|subsection)\{([^}]+)\}/g,
+          // Look for sequences that appear to be sentences (starts with capital, has spaces, ends with period)
+          /[A-Z][a-z]+(?:\s+[a-z]+){2,}\.?/g
         ];
         
         let extractedParts: string[] = [];
@@ -143,14 +151,32 @@ export default async function parsePdf(buffer: Buffer): Promise<PDFData> {
       // Clean up the text
       extractedText = extractedText
         // Normalize line breaks
-        .replace(/\r\n/g, '\n') 
+        .replace(/\r\n/g, '\n')
         // Remove multiple consecutive line breaks
         .replace(/\n{3,}/g, '\n\n')
+        // Remove PDF-specific markers and LaTeX commands
+        .replace(/\\?[\\(]|\\\)/g, '')
+        .replace(/\\[a-zA-Z]+\{|\}/g, '')
+        .replace(/\\[a-zA-Z]+/g, ' ')
+        .replace(/endobj|obj|\d+ \d+ obj/g, '')
+        .replace(/stream|endstream/g, '')
+        .replace(/xref|trailer/g, '')
+        .replace(/\/(?:Title|Author|Subject|Keywords|Producer|Creator|CreationDate|ModDate|BaseFont|Encoding|FontDescriptor|Font|Page|Contents|Resources|MediaBox)/g, '')
         // Remove non-printable characters
         .replace(/[^\x20-\x7E\n\r\t]/g, ' ')
         // Normalize whitespace
         .replace(/\s+/g, ' ')
         // Trim whitespace
+        .trim();
+      
+      // Further cleanup - remove gibberish that often appears in PDF extractions
+      extractedText = extractedText
+        // Remove weird character sequences that are often artifacts
+        .replace(/[^\w\s.,;:?!()"'-]{3,}/g, ' ')
+        // If we see lots of endobj patterns, it's probably just PDF structure, not content
+        .replace(/endobj\s*\d+\s*\d+\s*obj/g, ' ')
+        // Remove common PDF dictionary entries that get mistakenly included
+        .replace(/\/Length \d+ >>|\/Filter \/FlateDecode/g, ' ')
         .trim();
       
       console.log("Extracted text from PDF (sample):", extractedText.substring(0, 200));
