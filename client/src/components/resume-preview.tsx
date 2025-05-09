@@ -50,6 +50,7 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
       let formatName = 'Plain Text';
       if (format === 'markdown') formatName = 'Markdown';
       if (format === 'docx') formatName = 'Word-compatible HTML';
+      if (format === 'pdf') formatName = 'PDF';
       
       const cvType = useOriginal ? 'original' : 'optimized';
       
