@@ -191,6 +191,7 @@ export function BorderlessExperience() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
+                className="pb-32" // Added padding to prevent content from being hidden behind sticky button
               >
                 {/* Intro guide - only shown initially */}
                 <AnimatePresence>
@@ -235,15 +236,17 @@ export function BorderlessExperience() {
                   />
                 </div>
                 
-                {/* Floating action button for job description analysis */}
+                {/* Sticky action bar - ALWAYS VISIBLE */}
                 {!isAnalyzing && jobDescription.length >= 50 && (
-                  <FloatingActionButton
-                    icon={<ArrowRight className="h-6 w-6" />}
-                    onClick={handleAnalyze}
-                    position="bottom-right"
-                    tooltip="Analyze job description"
-                    size="large"
-                  />
+                  <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50">
+                    <button
+                      className="w-full bg-blue-600 text-white py-4 px-4 rounded-xl font-medium text-lg flex items-center justify-center gap-2"
+                      onClick={handleAnalyze}
+                    >
+                      <span>Analyze Job Description</span>
+                      <ArrowRight className="h-5 w-5" />
+                    </button>
+                  </div>
                 )}
                 
                 {/* Loading indicator */}
@@ -272,6 +275,7 @@ export function BorderlessExperience() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
+                className="pb-32" // Added padding to prevent content from being hidden behind sticky button
               >
                 {/* Resume stage guide */}
                 {!resumeText && (
@@ -301,21 +305,23 @@ export function BorderlessExperience() {
                   />
                 </div>
                 
-                {/* Floating action button for resume optimization */}
+                {/* Sticky action bar for resume section - ALWAYS VISIBLE */}
                 {resumeText && analysisResult && (
-                  <FloatingActionButton
-                    icon={<Edit className="h-6 w-6" />}
-                    onClick={() => {
-                      toast({
-                        title: "Coming Soon",
-                        description: "Resume optimization will be available soon!"
-                      });
-                      haptics.impact();
-                    }}
-                    position="bottom-right"
-                    tooltip="Optimize your resume"
-                    size="large"
-                  />
+                  <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50">
+                    <button
+                      className="w-full bg-blue-600 text-white py-4 px-4 rounded-xl font-medium text-lg flex items-center justify-center gap-2"
+                      onClick={() => {
+                        toast({
+                          title: "Coming Soon",
+                          description: "Resume optimization will be available soon!"
+                        });
+                        haptics.impact();
+                      }}
+                    >
+                      <Edit className="h-5 w-5" />
+                      <span>Optimize Resume</span>
+                    </button>
+                  </div>
                 )}
                 
                 <div className="flex justify-center my-6">
@@ -371,7 +377,7 @@ export function BorderlessExperience() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
-                className="space-y-5"
+                className="space-y-5 pb-32" // Added padding to prevent content from being hidden
               >
                 {/* Analysis success message */}
                 <motion.div
@@ -508,14 +514,16 @@ export function BorderlessExperience() {
                   </motion.div>
                 )}
                 
-                {/* Floating action button for moving to resume optimization */}
-                <FloatingActionButton
-                  icon={<Edit className="h-6 w-6" />}
-                  onClick={() => handleSectionChange('resume')}
-                  position="bottom-right"
-                  tooltip="Go to resume optimization"
-                  size="large"
-                />
+                {/* Sticky action bar for analysis section - ALWAYS VISIBLE */}
+                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50">
+                  <button
+                    className="w-full bg-blue-600 text-white py-4 px-4 rounded-xl font-medium text-lg flex items-center justify-center gap-2"
+                    onClick={() => handleSectionChange('resume')}
+                  >
+                    <Edit className="h-5 w-5" />
+                    <span>Continue to Resume Optimization</span>
+                  </button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
