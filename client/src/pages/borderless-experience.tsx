@@ -90,48 +90,123 @@ export function BorderlessExperience() {
     }
   }, [showIntroGuide]);
 
-  // Handle section change with improved feedback
+  // Handle section change with guided experience
   const handleSectionChange = (section: 'job' | 'resume' | 'analysis' | 'result') => {
-    // Only provide warnings but don't block navigation
-    // to prevent users from getting stuck
-    
-    // Give feedback but ALWAYS allow navigation
+    // PROPER STEP-BY-STEP FLOW:
+    // Job (enter job description) -> Analyze -> Analysis (view results) -> Resume (enter resume) -> Optimize -> Result
+
+    // Prevent skipping steps with clear guidance
     if (section === 'analysis' && !analysisResult) {
-      toast({
-        title: "Analysis required",
-        description: "Please analyze a job description first"
-      });
-      haptics.warning();
-    }
-    else if (section === 'resume' && !jobDescription) {
-      toast({
-        title: "Job description needed",
-        description: "Please enter a job description first"
-      });
-      haptics.warning();
-    }
-    else if (section === 'result' && !optimizationResult) {
-      toast({
-        title: "Optimization required",
-        description: "Please optimize your resume first"
-      });
-      haptics.warning();
-    }
-    else {
-      // Provide positive feedback
-      haptics.impact();
-      
-      // Provide contextual guidance based on section changes
-      if (section === 'resume' && !resumeText && jobDescription) {
+      // Can't go to analysis without analyzing the job description first
+      // Instead, guide them to complete the job description
+      if (jobDescription.length < 50) {
         toast({
-          title: "Ready for your resume",
-          description: "Tap below to enter your resume content"
+          title: "Complete the job description",
+          description: "Enter a job description and tap 'Analyze' to continue",
+          duration: 3000
         });
+        haptics.warning();
+        // Force them to job section to complete this step
+        setActiveSection('job');
+      } else {
+        // They have a job description but haven't analyzed it
+        // Keep them on job section but highlight the analyze button
+        toast({
+          title: "Tap 'Analyze'",
+          description: "Analyze the job description to continue to the next step",
+          duration: 3000
+        });
+        setActiveSection('job');
+        // Add visual highlight to the analyze button
+        const analyzeButton = document.querySelector('.analyze-button');
+        if (analyzeButton) {
+          analyzeButton.classList.add('animate-pulse');
+          setTimeout(() => {
+            analyzeButton.classList.remove('animate-pulse');
+          }, 2000);
+        }
       }
+      return;
+    } 
+    else if (section === 'resume' && !jobDescription) {
+      // Can't go to resume without a job description
+      toast({
+        title: "First step: Job Description",
+        description: "Enter a job description before continuing",
+        duration: 3000
+      });
+      haptics.warning();
+      setActiveSection('job');
+      return;
+    } 
+    else if (section === 'resume' && !analysisResult) {
+      // Can't go to resume without analyzing the job
+      toast({
+        title: "Analyze job first",
+        description: "Please analyze the job description before continuing",
+        duration: 3000
+      });
+      haptics.warning();
+      setActiveSection('job');
+      return;
+    } 
+    else if (section === 'result' && !optimizationResult) {
+      // Can't go to results without optimizing
+      if (!resumeText) {
+        // If they don't have resume text, send them to resume section
+        toast({
+          title: "Enter your resume",
+          description: "Please enter your resume text before optimizing",
+          duration: 3000
+        });
+        haptics.warning();
+        setActiveSection('resume');
+      } else if (!analysisResult) {
+        // If they don't have analysis, send them back to start
+        toast({
+          title: "Complete previous steps",
+          description: "Please analyze the job description first",
+          duration: 3000
+        });
+        haptics.warning();
+        setActiveSection('job');
+      } else {
+        // They have resume and analysis but haven't optimized
+        toast({
+          title: "Optimize your resume",
+          description: "Tap 'Optimize Resume' to see results",
+          duration: 3000
+        });
+        haptics.warning();
+        setActiveSection('resume');
+        
+        // Add visual highlight to the optimize button
+        setTimeout(() => {
+          const optimizeButton = document.querySelector('.optimize-button');
+          if (optimizeButton) {
+            optimizeButton.classList.add('animate-pulse');
+            setTimeout(() => {
+              optimizeButton.classList.remove('animate-pulse');
+            }, 2000);
+          }
+        }, 500); // Short delay to ensure the button exists after section change
+      }
+      return;
     }
     
-    // ALWAYS change section regardless of validation
-    // This is critical to prevent users from getting stuck
+    // If we got here, the navigation is valid
+    haptics.impact();
+    
+    // Provide helpful contextual guidance
+    if (section === 'resume' && !resumeText && jobDescription && analysisResult) {
+      toast({
+        title: "Ready for your resume",
+        description: "Enter your resume text to continue",
+        duration: 3000
+      });
+    }
+    
+    // Proceed with navigation
     setActiveSection(section);
   };
   
@@ -434,7 +509,7 @@ export function BorderlessExperience() {
                 {!isAnalyzing && jobDescription.length >= 50 && (
                   <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50">
                     <button
-                      className="w-full bg-blue-600 text-white py-4 px-4 rounded-xl font-medium text-lg flex items-center justify-center gap-2"
+                      className="analyze-button w-full bg-blue-600 text-white py-4 px-4 rounded-xl font-medium text-lg flex items-center justify-center gap-2"
                       onClick={handleAnalyze}
                     >
                       <span>Analyze Job Description</span>
@@ -551,7 +626,7 @@ export function BorderlessExperience() {
                 {resumeText && analysisResult && (
                   <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50">
                     <button
-                      className="w-full bg-blue-600 text-white py-4 px-4 rounded-xl font-medium text-lg flex items-center justify-center gap-2"
+                      className="optimize-button w-full bg-blue-600 text-white py-4 px-4 rounded-xl font-medium text-lg flex items-center justify-center gap-2"
                       onClick={handleOptimizeResume}
                       disabled={isOptimizing}
                     >
