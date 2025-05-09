@@ -59,8 +59,14 @@ export function FloatingReasoningTimeline({ steps, isAnalyzing }: FloatingReason
   // Get current step for collapsed view
   const currentStep = steps[currentStepIndex] || steps[steps.length - 1];
 
+  // Ability to dismiss the whole component
+  const [dismissed, setDismissed] = useState(false);
+
+  // If user dismissed the component, don't show it
+  if (dismissed) return null;
+
   return (
-    <div className="fixed bottom-20 right-4 z-50 w-[90%] max-w-[300px]">
+    <div className="fixed bottom-16 left-0 right-0 z-50 px-4 mx-auto max-w-[600px]">
       <motion.div 
         className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"
         initial={{ opacity: 0, y: 20, scale: 0.9 }}
@@ -78,10 +84,12 @@ export function FloatingReasoningTimeline({ steps, isAnalyzing }: FloatingReason
       >
         {/* Header: Always visible */}
         <div 
-          className="flex items-center justify-between p-3 border-b border-gray-100 cursor-pointer"
-          onClick={toggleExpanded}
+          className="flex items-center justify-between p-3 border-b border-gray-100"
         >
-          <div className="flex items-center gap-2">
+          <div 
+            className="flex items-center gap-2 flex-1 cursor-pointer"
+            onClick={toggleExpanded}
+          >
             <div className="bg-blue-100 rounded-full p-1">
               {isAnalyzing ? (
                 <svg className="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -101,9 +109,28 @@ export function FloatingReasoningTimeline({ steps, isAnalyzing }: FloatingReason
               </p>
             </div>
           </div>
-          <button onClick={toggleExpanded} className="text-gray-400 hover:text-gray-500">
-            {expanded ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
-          </button>
+          
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={toggleExpanded} 
+              className="text-gray-400 hover:text-gray-500 p-1"
+            >
+              {expanded ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
+            </button>
+            
+            {!isAnalyzing && (
+              <button 
+                onClick={() => {
+                  haptics.impact();
+                  setDismissed(true);
+                }} 
+                className="text-gray-400 hover:text-gray-500 p-1"
+                title="Dismiss"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Current step (when collapsed) */}

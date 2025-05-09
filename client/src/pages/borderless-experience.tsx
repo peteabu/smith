@@ -275,6 +275,8 @@ export function BorderlessExperience() {
       const cvData = await cvResponse.json();
       const cvId = cvData.id;
       
+      console.log("Uploaded CV with ID:", cvId);
+      
       // Use the CV ID and job description ID to optimize
       const optimizeResponse = await fetch('/api/optimize', {
         method: 'POST',
@@ -293,10 +295,18 @@ export function BorderlessExperience() {
       
       const optimizedResult = await optimizeResponse.json();
       
+      console.log("Optimization result:", optimizedResult);
+      
+      // Add fallback data if optimizedText is missing
+      if (!optimizedResult.optimizedText && resumeText) {
+        optimizedResult.optimizedText = resumeText;
+        console.log("Using original resume text as fallback");
+      }
+      
       // Success notification
       toast({
         title: "Resume Optimized",
-        description: `Match rate: ${optimizedResult.matchRate}%`,
+        description: `Match rate: ${optimizedResult.matchRate || '0'}%`,
         duration: 5000
       });
       haptics.success();
@@ -309,6 +319,7 @@ export function BorderlessExperience() {
       setActiveSection('result');
       
     } catch (error) {
+      console.error("Optimization failed:", error);
       toast({
         title: "Optimization failed",
         description: error instanceof Error ? error.message : "An unexpected error occurred",
@@ -1051,8 +1062,10 @@ export function BorderlessExperience() {
                       </div>
                     </div>
                     
-                    <div className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed max-h-[300px] overflow-y-auto border border-gray-100 rounded-md p-3 bg-gray-50">
-                      {optimizationResult.optimizedText}
+                    <div className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed max-h-[40vh] overflow-y-auto border border-gray-100 rounded-md p-3 bg-gray-50">
+                      {optimizationResult && optimizationResult.optimizedText ? 
+                        optimizationResult.optimizedText : 
+                        "No optimized content available. Please try again."}
                     </div>
                   </div>
                   
@@ -1062,13 +1075,19 @@ export function BorderlessExperience() {
                       className="text-blue-600"
                       onClick={() => {
                         // Copy optimized text to clipboard
-                        if (navigator.clipboard) {
+                        if (navigator.clipboard && optimizationResult && optimizationResult.optimizedText) {
                           navigator.clipboard.writeText(optimizationResult.optimizedText);
                           toast({
                             title: "Content copied",
                             description: "Optimized resume copied to clipboard"
                           });
                           haptics.impact();
+                        } else {
+                          toast({
+                            title: "Error",
+                            description: "No content to copy",
+                            variant: "destructive"
+                          });
                         }
                       }}
                     >
