@@ -1,24 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileUpload } from "@/components/file-upload";
 import { JobDescription } from "@/components/job-description";
 import { KeywordAnalysis } from "@/components/keyword-analysis-new";
 import { ResumePreview } from "@/components/resume-preview";
 import { OptimizeButton } from "@/components/optimize-button";
 import { NotificationToast } from "@/components/notification-toast";
+import { ProfileMenu } from "@/components/profile-menu";
 import { Helmet } from "react-helmet-async";
 import { KeywordAnalysisResult, CvOptimizationResult, optimizeCV } from "@/lib/cv-analyzer";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { FileText, Edit, LineChart, Download } from "lucide-react";
+import { FileText, Edit, LineChart, Download, Settings } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { hasStoredCV, getBaseCV } from "@/lib/local-storage";
 
 // Define workflow steps
 enum WorkflowStep {
   UPLOAD_CV = "upload",
   ANALYZE_JOB = "analyze",
   OPTIMIZE = "optimize",
-  RESULTS = "results"
+  RESULTS = "results",
+  SETTINGS = "settings"
 }
 
 export default function Home() {
@@ -30,6 +33,19 @@ export default function Home() {
   const [activeStep, setActiveStep] = useState<WorkflowStep>(WorkflowStep.UPLOAD_CV);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  
+  // Check for existing CV on app load
+  useEffect(() => {
+    if (hasStoredCV()) {
+      const { cvId, fileName } = getBaseCV();
+      if (cvId) {
+        setCvId(cvId);
+        setCvFilename(fileName);
+        // Skip to job description step since we already have a CV
+        setActiveStep(WorkflowStep.ANALYZE_JOB);
+      }
+    }
+  }, []);
   
   const handleCvUploaded = (id: number, filename: string) => {
     setCvId(id);
@@ -107,7 +123,10 @@ export default function Home() {
       </Helmet>
       
       <div className="bg-cream min-h-screen font-serif text-moss-dark mobile-safe-area">
-        <header className="py-4 sm:py-6 px-4 text-center sticky top-0 z-30 bg-cream border-b border-brown/20">
+        <header className="py-4 sm:py-6 px-4 sticky top-0 z-30 bg-cream border-b border-brown/20 flex flex-col items-center relative">
+          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+            <ProfileMenu onResumeUpdated={handleCvUploaded} />
+          </div>
           <h1 className="font-display text-2xl sm:text-3xl md:text-4xl text-brown-dark tracking-wide">CV Optimizer</h1>
           <p className="font-mono text-xs sm:text-sm mt-1 sm:mt-2 text-brown opacity-80">ATS-friendly resume tailoring</p>
         </header>

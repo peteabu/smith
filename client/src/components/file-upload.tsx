@@ -42,14 +42,8 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
         setResumeText(content);
         setLastUpdated(lastUpdated);
         
-        // If auto-restore is enabled, immediately upload the CV to the server
-        // and pass the ID to the parent component
+        // Tell the parent we already have a resume
         onCvUploaded(cvId, fileName);
-        
-        toast({
-          title: "Resume loaded",
-          description: "Your saved resume has been loaded from local storage",
-        });
       }
     }
   }, []);
@@ -171,15 +165,22 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
       <div className="bg-white border border-brown/30 rounded-lg p-6 paper-shadow">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
           <div>
-            <h2 className="font-display text-lg">Enter your resume text</h2>
+            <h2 className="font-display text-lg">{hasSavedResume ? "Your saved resume" : "Welcome to CV Optimizer"}</h2>
             <p className="text-sm text-brown">
-              Paste your resume content to optimize for job descriptions
-              {hasSavedResume && lastUpdated && (
-                <span className="flex items-center mt-1 text-xs text-green-700">
-                  <Clock className="h-3 w-3 mr-1" />
-                  Last saved: {formatLastUpdated(lastUpdated)}
-                </span>
-              )}
+              {hasSavedResume 
+                ? (
+                  <>
+                    Your base resume is already saved and will be used for all optimizations
+                    {lastUpdated && (
+                      <span className="flex items-center mt-1 text-xs text-green-700">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Last saved: {formatLastUpdated(lastUpdated)}
+                      </span>
+                    )}
+                  </>
+                ) 
+                : "To get started, please paste your base resume below - this will be used for all job optimizations"
+              }
             </p>
           </div>
           
