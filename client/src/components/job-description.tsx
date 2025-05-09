@@ -203,18 +203,6 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
           className="relative w-full border-0 bg-gray-50/50 rounded-xl p-4 min-h-[200px] overflow-hidden cursor-text"
           onClick={openImmersiveEditor}
         >
-          <div className="absolute top-3 right-3">
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                openImmersiveEditor();
-              }} 
-              className="bg-white/90 text-gray-500 p-2 rounded-full shadow-sm backdrop-blur-sm hover:bg-white"
-            >
-              <PencilLine size={16} />
-            </button>
-          </div>
-          
           {value ? (
             <div className="whitespace-pre-wrap text-gray-800 pr-8">
               {value.length > 300 
