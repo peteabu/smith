@@ -100,28 +100,117 @@
     padding-right: env(safe-area-inset-right);
   }
   
+  /* Advanced mobile button with premium feel */
   .mobile-button {
-    @apply active:scale-95 active:brightness-95 transform transition-transform duration-100;
+    @apply active:scale-[0.97] active:brightness-95 transform transition-transform;
     -webkit-touch-callout: none;
+    -webkit-user-select: none;
     user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transform-style: preserve-3d;
+    will-change: transform;
+    transition: transform 0.14s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
   
+  /* Touch feedback with subtle gradient effect */
   .touch-feedback {
-    @apply transition-colors duration-75;
+    @apply transition-all duration-75 relative overflow-hidden;
   }
   
-  .touch-feedback:active {
-    background-color: rgba(139, 125, 107, 0.1);
+  /* Create a premium ripple effect on touch */
+  .touch-feedback:active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+      circle at var(--touch-x, 50%) var(--touch-y, 50%),
+      rgba(139, 125, 107, 0.2) 0%,
+      rgba(139, 125, 107, 0) 70%
+    );
+    opacity: 0.8;
+    pointer-events: none;
+    z-index: 1;
+    animation: touch-ripple 0.5s ease-out forwards;
   }
   
+  @keyframes touch-ripple {
+    0% { opacity: 0.8; }
+    100% { opacity: 0; }
+  }
+  
+  /* iOS-like momentum scrolling */
   .mobile-scroll {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
     scrollbar-width: none; /* Firefox */
+    overscroll-behavior: none; /* Prevent scroll chaining */
+    position: relative;
+    overflow-y: auto;
+    will-change: scroll-position;
   }
   
+  /* Hide scrollbars for cleaner look */
   .mobile-scroll::-webkit-scrollbar {
     display: none;
+  }
+  
+  /* Enhanced scroll physics */
+  @supports (scroll-snap-type: x mandatory) {
+    .mobile-snap-scroll {
+      scroll-snap-type: x mandatory;
+      scroll-padding: 1rem;
+    }
+    
+    .mobile-snap-item {
+      scroll-snap-align: start;
+    }
+  }
+  
+  /* Premium iOS-style overscroll effect */
+  .ios-overscroll {
+    scroll-behavior: smooth;
+    overscroll-behavior-y: none;
+    overscroll-behavior-x: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Enhanced touch interactions for iOS */
+  .ios-device .touch-optimized-button {
+    transition: all 0.12s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+  
+  /* Loading shimmer animation for placeholders */
+  .shimmer-effect {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .shimmer-effect::after {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0,
+      rgba(255, 255, 255, 0.2) 20%,
+      rgba(255, 255, 255, 0.5) 60%,
+      rgba(255, 255, 255, 0)
+    );
+    animation: shimmer 2s infinite;
+    content: '';
+  }
+  
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
   }
   
   /* Smooth animations for mobile */
