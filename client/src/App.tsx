@@ -6,16 +6,21 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import { useDeviceDetection } from "@/hooks/use-device-detection";
-import { useEffect, lazy, Suspense } from "react";
+import { useEffect, lazy, Suspense, useState } from "react";
 import haptics from "@/lib/haptics";
 
-// Dynamically import the mobile experience for code splitting
+// Dynamically import experiences for code splitting
 const MobileExperience = lazy(() => import("@/components/mobile-experience").then(module => ({
   default: module.MobileExperience
 })));
 
+const BorderlessExperience = lazy(() => import("@/pages/borderless-experience").then(module => ({
+  default: module.BorderlessExperience
+})));
+
 function Router() {
   const device = useDeviceDetection();
+  const [useBorderlessExperience, setUseBorderlessExperience] = useState(true);
   
   // Trigger initial haptic feedback on app load for mobile devices
   useEffect(() => {
@@ -52,17 +57,44 @@ function Router() {
     };
   }, [device.isMobile, device.isIOS]);
   
+  // Toggle between experiences with double tap anywhere on the screen
+  useEffect(() => {
+    if (device.isMobile) {
+      let lastTap = 0;
+      const handleDoubleTap = () => {
+        const now = new Date().getTime();
+        const timeSince = now - lastTap;
+        
+        if (timeSince < 300 && timeSince > 0) {
+          // Double tap detected
+          haptics.impact();
+          setUseBorderlessExperience(prev => !prev);
+        }
+        
+        lastTap = now;
+      };
+      
+      window.addEventListener('touchend', handleDoubleTap);
+      
+      return () => {
+        window.removeEventListener('touchend', handleDoubleTap);
+      };
+    }
+  }, [device.isMobile]);
+  
   if (device.isMobile) {
-    return (
-      <Suspense fallback={
-        <div className="h-screen w-screen flex items-center justify-center bg-cream">
-          <div className="text-center">
-            <div className="mb-4 h-12 w-12 rounded-full border-4 border-t-transparent border-brown animate-spin mx-auto"></div>
-            <p className="text-brown font-mono">Loading experience...</p>
-          </div>
+    const LoadingFallback = (
+      <div className="h-screen w-screen flex items-center justify-center bg-cream">
+        <div className="text-center">
+          <div className="mb-4 h-12 w-12 rounded-full border-4 border-t-transparent border-brown animate-spin mx-auto"></div>
+          <p className="text-brown font-mono">Loading experience...</p>
         </div>
-      }>
-        <MobileExperience />
+      </div>
+    );
+    
+    return (
+      <Suspense fallback={LoadingFallback}>
+        {useBorderlessExperience ? <BorderlessExperience /> : <MobileExperience />}
       </Suspense>
     );
   }
