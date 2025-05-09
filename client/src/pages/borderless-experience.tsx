@@ -28,11 +28,13 @@ interface AnalysisProgress {
 
 export function BorderlessExperience() {
   // App state
-  const [activeSection, setActiveSection] = useState<'job' | 'resume' | 'analysis'>('job');
+  const [activeSection, setActiveSection] = useState<'job' | 'resume' | 'analysis' | 'result'>('job');
   const [jobDescription, setJobDescription] = useState('');
   const [resumeText, setResumeText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<KeywordAnalysisResult | null>(null);
+  const [optimizationResult, setOptimizationResult] = useState<any | null>(null);
   const [analysisSteps, setAnalysisSteps] = useState<AnalysisStep[]>([]);
   const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -89,7 +91,7 @@ export function BorderlessExperience() {
   }, [showIntroGuide]);
 
   // Handle section change with improved feedback
-  const handleSectionChange = (section: 'job' | 'resume' | 'analysis') => {
+  const handleSectionChange = (section: 'job' | 'resume' | 'analysis' | 'result') => {
     // Don't allow navigation to Analysis if no result
     if (section === 'analysis' && !analysisResult) {
       toast({
@@ -105,6 +107,16 @@ export function BorderlessExperience() {
       toast({
         title: "Job description needed",
         description: "Please enter a job description first"
+      });
+      haptics.warning();
+      return;
+    }
+    
+    // Don't allow navigation to Result if no optimization result
+    if (section === 'result' && !optimizationResult) {
+      toast({
+        title: "Optimization required",
+        description: "Please optimize your resume first"
       });
       haptics.warning();
       return;
@@ -153,6 +165,88 @@ export function BorderlessExperience() {
   // Handle resume text change
   const handleResumeTextChange = (text: string) => {
     setResumeText(text);
+  };
+  
+  // Handle resume optimization
+  const handleOptimizeResume = async () => {
+    if (!resumeText || !analysisResult || !analysisResult.id) {
+      toast({
+        title: "Missing information",
+        description: "Please ensure you have both resume text and job analysis"
+      });
+      haptics.warning();
+      return;
+    }
+    
+    // Add feedback for user
+    toast({
+      title: "Starting optimization",
+      description: "Optimizing your resume for the job..."
+    });
+    haptics.impact();
+    
+    try {
+      // Create a temporary CV document with the resume text
+      const cvResponse = await fetch('/api/cv/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileName: 'resume.txt',
+          fileType: 'text/plain',
+          extractedText: resumeText
+        }),
+      });
+      
+      if (!cvResponse.ok) {
+        throw new Error('Failed to upload resume text');
+      }
+      
+      const cvData = await cvResponse.json();
+      const cvId = cvData.id;
+      
+      // Use the CV ID and job description ID to optimize
+      const optimizeResponse = await fetch('/api/optimize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cvId,
+          jobDescriptionId: analysisResult.id
+        }),
+      });
+      
+      if (!optimizeResponse.ok) {
+        throw new Error('Failed to optimize resume');
+      }
+      
+      const optimizationResult = await optimizeResponse.json();
+      
+      // Success notification
+      toast({
+        title: "Resume Optimized",
+        description: `Match rate: ${optimizationResult.matchRate}%`,
+        duration: 5000
+      });
+      haptics.success();
+      
+      // Navigate to analysis section to show results
+      setActiveSection('analysis');
+      
+      // Here you would typically update the UI to show optimization results
+      // For now, let's set this in state so we can reference it later
+      setOptimizationResult(optimizationResult);
+      
+    } catch (error) {
+      toast({
+        title: "Optimization failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive"
+      });
+      haptics.error();
+    }
   };
   
   // Handle analysis with improved feedback and socket integration
