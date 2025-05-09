@@ -31,20 +31,15 @@ function Router() {
     if (device.isMobile) {
       haptics.impact();
       
-      // Lock body scrolling on mobile to prevent bounce effects
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      document.body.style.height = '100%';
+      // Allow scrolling within containers but prevent body bounce effects
+      document.body.style.overscrollBehavior = 'none';
+      document.documentElement.style.overscrollBehavior = 'none';
+      document.documentElement.style.height = '100%';
       
       // Apply iOS-specific optimizations
       if (device.isIOS) {
         // Add iOS-specific class to body
         document.body.classList.add('ios-device');
-        
-        // Prevent rubber-banding/overscroll effect
-        document.body.style.overscrollBehavior = 'none';
-        document.documentElement.style.overscrollBehavior = 'none';
         
         // Disable tap highlight
         (document.documentElement.style as any).webkitTapHighlightColor = 'transparent';
@@ -53,11 +48,9 @@ function Router() {
     
     return () => {
       // Clean up
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.height = '';
       document.body.style.overscrollBehavior = '';
+      document.documentElement.style.overscrollBehavior = '';
+      document.documentElement.style.height = '';
     };
   }, [device.isMobile, device.isIOS]);
   

@@ -88,9 +88,12 @@ export function BorderlessCanvas({ children }: BorderlessCanvasProps) {
   return (
     <div 
       ref={canvasRef}
-      className="relative w-full h-full overflow-y-auto overflow-x-hidden touch-manipulation bg-white mobile-scroll"
+      className="relative w-full h-full overflow-y-auto overflow-x-hidden touch-manipulation bg-white mobile-scroll ios-overscroll"
       style={{
         WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain', // Prevent scroll chaining
+        maxHeight: '100vh',
+        position: 'relative',
       }}
     >
       <motion.div

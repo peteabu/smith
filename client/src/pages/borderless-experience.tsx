@@ -551,26 +551,35 @@ export function BorderlessExperience() {
                     )}
                     
                     {/* Analysis steps */}
-                    <div className="w-full max-w-md space-y-1.5 border border-blue-100 rounded-lg p-3 bg-blue-50">
+                    <div className="w-full max-w-md space-y-2.5 border border-blue-100 rounded-lg p-3 bg-blue-50 max-h-[60vh] overflow-y-auto">
                       {analysisSteps.map((step, index) => (
-                        <div key={index} className="flex gap-2 items-center text-xs py-1">
-                          {step.status === 'completed' ? (
-                            <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
-                          ) : step.status === 'in-progress' ? (
-                            <svg className="animate-spin h-4 w-4 text-blue-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                          ) : (
-                            <Clock className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                          )}
-                          <span className={`${step.status === 'completed' ? 'text-gray-700' : step.status === 'in-progress' ? 'text-blue-700' : 'text-gray-400'}`}>
-                            {step.step}
-                          </span>
-                          {step.sources && step.sources.length > 0 && (
-                            <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">
-                              {step.sources.length} sources
+                        <div key={index} className="flex flex-col gap-1">
+                          <div className="flex gap-2 items-center text-xs py-1">
+                            {step.status === 'completed' ? (
+                              <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
+                            ) : step.status === 'in-progress' ? (
+                              <svg className="animate-spin h-4 w-4 text-blue-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            ) : (
+                              <Clock className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                            )}
+                            <span className={`${step.status === 'completed' ? 'font-medium text-gray-700' : step.status === 'in-progress' ? 'font-medium text-blue-700' : 'text-gray-400'}`}>
+                              {step.step}
                             </span>
+                            {step.sources && step.sources.length > 0 && (
+                              <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">
+                                {step.sources.length} sources
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Show detailed reasoning for completed steps */}
+                          {step.status === 'completed' && step.result && (
+                            <div className="ml-6 mt-1 text-xs bg-white rounded p-2 border border-gray-100 text-gray-700 max-h-[150px] overflow-y-auto whitespace-pre-wrap">
+                              {step.result}
+                            </div>
                           )}
                         </div>
                       ))}
