@@ -238,7 +238,8 @@ export function BorderlessExperience() {
       // Set the optimization result in state
       setOptimizationResult(optimizedResult);
       
-      // Navigate to result section to show the optimized resume
+      // IMPORTANT: Force navigate to result section to show the optimized resume
+      // This bypasses the handleSectionChange function which might block navigation
       setActiveSection('result');
       
     } catch (error) {
@@ -322,8 +323,8 @@ export function BorderlessExperience() {
       // Provide success haptic feedback
       haptics.success();
       
-      // Navigate to the analysis view
-      handleSectionChange('analysis');
+      // IMPORTANT: Force navigate to analysis view, bypassing the handleSectionChange validation
+      setActiveSection('analysis');
     } catch (error) {
       toast({
         title: "Analysis failed",
@@ -825,7 +826,15 @@ export function BorderlessExperience() {
                 <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50">
                   <button
                     className="w-full bg-blue-600 text-white py-4 px-4 rounded-xl font-medium text-lg flex items-center justify-center gap-2"
-                    onClick={() => handleSectionChange('resume')}
+                    onClick={() => {
+                      // Force navigation to resume section
+                      setActiveSection('resume');
+                      haptics.success();
+                      toast({
+                        title: "Ready for optimization",
+                        description: "Now optimize your resume with the keywords"
+                      });
+                    }}
                   >
                     <Edit className="h-5 w-5" />
                     <span>Continue to Resume Optimization</span>

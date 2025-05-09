@@ -20,7 +20,11 @@ const BorderlessExperience = lazy(() => import("@/pages/borderless-experience").
 
 function Router() {
   const device = useDeviceDetection();
-  const [useBorderlessExperience, setUseBorderlessExperience] = useState(true);
+  // Always use borderless by default, save in localStorage to persist across refreshes
+  const [useBorderlessExperience, setUseBorderlessExperience] = useState(() => {
+    const saved = localStorage.getItem('useBorderlessExperience');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   
   // Trigger initial haptic feedback on app load for mobile devices
   useEffect(() => {
@@ -68,7 +72,12 @@ function Router() {
         if (timeSince < 300 && timeSince > 0) {
           // Double tap detected
           haptics.impact();
-          setUseBorderlessExperience(prev => !prev);
+          setUseBorderlessExperience((prev: boolean) => {
+            const newValue = !prev;
+            // Save to localStorage to persist across page refreshes
+            localStorage.setItem('useBorderlessExperience', JSON.stringify(newValue));
+            return newValue;
+          });
         }
         
         lastTap = now;
