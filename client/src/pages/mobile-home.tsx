@@ -41,10 +41,13 @@ export function MobileHome() {
     
     // Scroll to analyze section with animation
     setTimeout(() => {
-      document.getElementById('analyze-section')?.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'start'
-      });
+      const analyzeSection = document.getElementById('analyze-section');
+      if (analyzeSection) {
+        analyzeSection.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
     }, 100);
   };
   
@@ -79,7 +82,9 @@ export function MobileHome() {
         haptics.heavyImpact();
       }
       
-      const result = await optimizeCV(cvId, analysisResult.keywords);
+      // Use the job description ID from the analysis result
+      const jobDescriptionId = analysisResult.id || 0;
+      const result = await optimizeCV(cvId, jobDescriptionId);
       setOptimizedCV(result);
       setActiveStep('result');
       
@@ -156,6 +161,11 @@ export function MobileHome() {
     haptics.tap();
   };
   
+  // Get numeric scroll position for window scrollTo
+  const getScrollTopPosition = () => {
+    return 0;
+  };
+  
   // Create menu items for FAB
   const menuItems = [
     {
@@ -168,7 +178,7 @@ export function MobileHome() {
       label: 'Copy',
       onClick: () => {
         if (optimizedCV) {
-          navigator.clipboard.writeText(optimizedCV.optimizedText);
+          navigator.clipboard.writeText(optimizedCV.optimizedContent || '');
           toast({
             title: 'Copied',
             description: 'Optimized CV copied to clipboard',
