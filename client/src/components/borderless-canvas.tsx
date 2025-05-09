@@ -2,6 +2,7 @@ import React, { ReactNode, useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDeviceDetection } from '@/hooks/use-device-detection';
 import haptics from '@/lib/haptics';
+import { Edit } from 'lucide-react';
 
 interface BorderlessCanvasProps {
   children: ReactNode;
@@ -120,6 +121,9 @@ interface BorderlessContentProps {
   isEditing?: boolean;
   onStartEdit?: () => void;
   onFinishEdit?: () => void;
+  actionLabel?: string;
+  onAction?: () => void;
+  disabled?: boolean;
 }
 
 export function BorderlessContent({
@@ -129,11 +133,16 @@ export function BorderlessContent({
   contentType = 'paragraph',
   isEditing = false,
   onStartEdit,
-  onFinishEdit
+  onFinishEdit,
+  actionLabel,
+  onAction,
+  disabled = false
 }: BorderlessContentProps) {
   const [isEditingLocal, setIsEditingLocal] = useState(isEditing);
   const [localContent, setLocalContent] = useState(content);
   const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement>(null);
+  const [showGuide, setShowGuide] = useState(false);
+  const device = useDeviceDetection();
   
   // Sync with parent isEditing state if provided
   useEffect(() => {
@@ -149,11 +158,20 @@ export function BorderlessContent({
   useEffect(() => {
     if (isEditingLocal && inputRef.current) {
       inputRef.current.focus();
+      
+      // Show guide tooltip when first editing
+      if (!content && contentType === 'paragraph') {
+        setShowGuide(true);
+        // Auto-hide after 3 seconds
+        const timer = setTimeout(() => setShowGuide(false), 3000);
+        return () => clearTimeout(timer);
+      }
     }
-  }, [isEditingLocal]);
+  }, [isEditingLocal, content, contentType]);
   
   // Handle click to start editing
   const handleStartEdit = () => {
+    if (disabled) return;
     haptics.subtle();
     setIsEditingLocal(true);
     if (onStartEdit) onStartEdit();
@@ -164,6 +182,17 @@ export function BorderlessContent({
     setIsEditingLocal(false);
     onContentChange(localContent);
     if (onFinishEdit) onFinishEdit();
+    setShowGuide(false);
+  };
+  
+  // Handle keyboard submit (for mobile)
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      if (contentType !== 'paragraph') {
+        e.preventDefault();
+        handleBlur();
+      }
+    }
   };
   
   // Get appropriate styles based on content type
@@ -178,42 +207,116 @@ export function BorderlessContent({
     }
   };
   
+  // Handle action
+  const handleAction = () => {
+    if (onAction) {
+      haptics.impact();
+      onAction();
+    }
+  };
+  
   return (
-    <div 
-      className="relative w-full transition-colors duration-200"
-      onClick={!isEditingLocal ? handleStartEdit : undefined}
-    >
-      {isEditingLocal ? (
-        <textarea
-          ref={inputRef as React.RefObject<HTMLTextAreaElement>}
-          value={localContent}
-          onChange={(e) => setLocalContent(e.target.value)}
-          onBlur={handleBlur}
-          placeholder={placeholder}
-          className={`w-full bg-transparent border-0 resize-none min-h-[24px] focus:outline-none focus:ring-0 p-0 ${getContentStyles()}`}
-          style={{ 
-            minHeight: contentType === 'paragraph' ? '5rem' : contentType === 'title' ? '2.5rem' : '1.5rem'
-          }}
-        />
-      ) : (
-        <div className={`${getContentStyles()} ${!content ? 'text-gray-400' : ''}`}>
-          {content || placeholder}
-        </div>
-      )}
-      
-      {/* Subtle editing indicator */}
-      <AnimatePresence>
-        {isEditingLocal && (
-          <motion.div 
-            className="absolute left-0 top-0 w-full h-full pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-blue-500 rounded-full" />
-          </motion.div>
+    <div className="relative w-full transition-colors duration-200 group">
+      <div 
+        className={`relative ${disabled ? 'opacity-70' : ''}`}
+        onClick={!isEditingLocal ? handleStartEdit : undefined}
+      >
+        {isEditingLocal ? (
+          <>
+            <textarea
+              ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+              value={localContent}
+              onChange={(e) => setLocalContent(e.target.value)}
+              onBlur={handleBlur}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder}
+              className={`w-full bg-transparent border-0 resize-none min-h-[24px] focus:outline-none focus:ring-0 px-0 py-1 ${getContentStyles()}`}
+              style={{ 
+                minHeight: contentType === 'paragraph' ? '5rem' : contentType === 'title' ? '2.5rem' : '1.5rem'
+              }}
+              autoComplete="off"
+              autoCorrect="on"
+              spellCheck="true"
+            />
+            
+            {/* Guidance tooltip for editing */}
+            <AnimatePresence>
+              {showGuide && (
+                <motion.div
+                  className="absolute -bottom-10 left-0 right-0 flex justify-center z-10"
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                >
+                  <div className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-full shadow-md">
+                    {contentType === 'paragraph' ? 'Type or paste content here' : 'Enter a title'}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </>
+        ) : (
+          <div className={`
+            ${getContentStyles()} 
+            ${!content ? 'text-gray-400' : ''} 
+            px-0 py-1
+            ${!disabled && 'hover:bg-gray-50 active:bg-gray-100 rounded-md transition-colors cursor-text'}
+          `}>
+            {content || placeholder}
+            
+            {/* Edit indicator on the right side - only shown on hover/active */}
+            {!disabled && !isEditingLocal && contentType !== 'title' && (
+              <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="bg-gray-100 rounded-full p-1">
+                  <Edit size={14} className="text-gray-500" />
+                </div>
+              </div>
+            )}
+          </div>
         )}
-      </AnimatePresence>
+        
+        {/* Subtle editing indicator */}
+        <AnimatePresence>
+          {isEditingLocal && (
+            <motion.div 
+              className="absolute left-0 top-0 w-full h-full pointer-events-none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-blue-500 rounded-full" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+      
+      {/* Action button - appears when content is filled and not editing */}
+      {actionLabel && onAction && content && !isEditingLocal && !disabled && (
+        <motion.div 
+          className="mt-2 mb-6"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <button
+            className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-4 py-2 rounded-full text-sm font-medium shadow-sm flex items-center justify-center gap-2 w-full transition-colors"
+            onClick={handleAction}
+          >
+            <span>{actionLabel}</span>
+            <motion.div
+              animate={{ x: [0, 3, 0] }}
+              transition={{ 
+                repeat: Infinity, 
+                duration: 1.5,
+                repeatType: "loop", 
+                ease: "easeInOut" 
+              }}
+            >
+              →
+            </motion.div>
+          </button>
+        </motion.div>
+      )}
     </div>
   );
 }
