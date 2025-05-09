@@ -1,4 +1,5 @@
 import { Wand2 } from "lucide-react";
+import haptics from "@/lib/haptics";
 
 interface OptimizeButtonProps {
   disabled: boolean;
@@ -11,12 +12,17 @@ export function OptimizeButton({
   isProcessing, 
   onClick 
 }: OptimizeButtonProps) {
+  // Create a wrapper function to add haptic feedback
+  const handleClick = () => {
+    haptics.impact();
+    onClick();
+  };
   return (
     <div className="text-center">
       <button
         id="process-cv"
-        className="font-mono text-md py-3 px-8 border border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center mx-auto"
-        onClick={onClick}
+        className="font-mono text-md py-4 sm:py-3 px-10 border border-brown/70 rounded primary-action-button hover:bg-[#DFCFB1] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center mx-auto mobile-button haptic-button"
+        onClick={handleClick}
         disabled={disabled || isProcessing}
       >
         {isProcessing ? (

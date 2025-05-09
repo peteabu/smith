@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Check, Clock } from "lucide-react";
 import { io } from "socket.io-client";
 import { Progress } from "@/components/ui/progress";
+import haptics from "@/lib/haptics";
 
 interface JobDescriptionProps {
   cvId: number | null;
@@ -99,11 +100,15 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
   
   // Handle analysis with manual trigger
   const handleAnalyze = useCallback(async () => {
+    // Strong haptic feedback for this primary action
+    haptics.impact();
+    
     if (!value || value.length < 50) {
       toast({
         title: "Job description too short",
         description: "Please enter a more detailed job description",
       });
+      haptics.warning();
       return;
     }
     
@@ -127,6 +132,9 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
           : `Identified ${result.keywords.length} keywords for your resume.`,
       });
       
+      // Success haptic feedback when analysis completes
+      haptics.success();
+      
       onAnalysisComplete(result);
     } catch (error) {
       toast({
@@ -134,6 +142,9 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
         description: error instanceof Error ? error.message : "Failed to analyze job description",
         variant: "destructive",
       });
+      
+      // Error haptic feedback
+      haptics.error();
     } finally {
       setIsAnalyzing(false);
     }
@@ -219,7 +230,7 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
         <button
           onClick={handleAnalyze}
           disabled={isAnalyzing || value.length < 50}
-          className="font-mono text-md py-3.5 sm:py-3 px-8 border border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center w-full mobile-button touch-feedback"
+          className="font-mono text-md py-4 sm:py-3.5 px-8 border border-brown/70 rounded primary-action-button hover:bg-[#DFCFB1] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center w-full mobile-button haptic-button"
         >
           {isAnalyzing ? (
             <>

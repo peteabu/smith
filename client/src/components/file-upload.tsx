@@ -7,6 +7,7 @@ import { uploadCV, previewCVText } from "@/lib/cv-analyzer";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import haptics from "@/lib/haptics";
 
 interface TextResumeInputProps {
   onCvUploaded: (cvId: number, fileName: string) => void;
@@ -25,12 +26,16 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
   };
   
   const handleSaveResume = async () => {
+    // Provide strong haptic feedback for primary action
+    haptics.impact();
+    
     if (!resumeText.trim()) {
       toast({
         title: "Resume content required",
         description: "Please paste your resume text before continuing",
         variant: "destructive",
       });
+      haptics.error();
       return;
     }
     
@@ -50,6 +55,9 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
         description: "Your resume text has been saved successfully",
       });
       
+      // Strong success haptic feedback
+      haptics.success();
+      
       // Toggle back to edit mode
       setIsPreviewMode(false);
     } catch (error) {
@@ -58,16 +66,24 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
         description: error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive",
       });
+      
+      // Error haptic feedback
+      haptics.error();
     } finally {
       setIsUploading(false);
     }
   };
   
   const handleTogglePreview = () => {
+    // Toggle preview mode with haptic feedback
+    haptics.tap();
     setIsPreviewMode(!isPreviewMode);
   };
   
   const handlePasteResume = async () => {
+    // Provide tactile feedback
+    haptics.tap();
+    
     try {
       const text = await navigator.clipboard.readText();
       if (text) {
@@ -76,6 +92,8 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
           title: "Text pasted",
           description: "Resume text pasted from clipboard",
         });
+        // Success haptic feedback
+        haptics.success();
       }
     } catch (error) {
       toast({
@@ -83,6 +101,8 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
         description: "Please paste your resume manually",
         variant: "destructive",
       });
+      // Error haptic feedback
+      haptics.error();
     }
   };
 
@@ -140,7 +160,7 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
         <button
           onClick={handleSaveResume}
           disabled={isUploading || !resumeText.trim()}
-          className="font-mono text-md py-3 sm:py-2 px-5 border border-brown/70 rounded bg-white hover:bg-paper transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mobile-button touch-feedback"
+          className="font-mono text-md py-3.5 sm:py-3 px-6 border border-brown/70 rounded primary-action-button hover:bg-[#DFCFB1] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mobile-button haptic-button"
         >
           {isUploading ? (
             <>
