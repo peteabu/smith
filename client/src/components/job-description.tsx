@@ -4,10 +4,12 @@ import { analyzeJobDescription } from "@/lib/cv-analyzer";
 import { useToast } from "@/hooks/use-toast";
 import { KeywordAnalysisResult } from "@/lib/cv-analyzer";
 import { Button } from "@/components/ui/button";
-import { Search, Check, Clock } from "lucide-react";
+import { Search, Check, Clock, Edit, PencilLine } from "lucide-react";
 import { io } from "socket.io-client";
 import { Progress } from "@/components/ui/progress";
 import haptics from "@/lib/haptics";
+import { ImmersiveEditor } from "@/components/immersive-editor";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface JobDescriptionProps {
   cvId: number | null;
@@ -174,6 +176,20 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
     }
   }, [isAnalyzing]);
   
+  // State for immersive editor
+  const [isImmersiveEditing, setIsImmersiveEditing] = useState(false);
+  
+  // Open the immersive editor
+  const openImmersiveEditor = () => {
+    haptics.impact();
+    setIsImmersiveEditing(true);
+  };
+  
+  // Close the immersive editor
+  const closeImmersiveEditor = () => {
+    setIsImmersiveEditing(false);
+  };
+  
   return (
     <div className="bg-white rounded-lg p-5 sm:p-6 paper-shadow">
       <h2 className="font-display text-lg mb-2 sm:mb-3">Job Description</h2>
@@ -182,13 +198,54 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
       </p>
       
       <div className="space-y-3">
-        <Textarea 
-          id="job-description" 
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="w-full h-64 sm:h-72 p-4 font-mono text-sm typewriter-cursor" 
-          placeholder="Paste job description here..."
-        />
+        {/* Preview area that opens immersive editor when clicked */}
+        <div 
+          className="relative w-full border-0 bg-gray-50/50 rounded-xl p-4 min-h-[200px] overflow-hidden cursor-text"
+          onClick={openImmersiveEditor}
+        >
+          <div className="absolute top-3 right-3">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                openImmersiveEditor();
+              }} 
+              className="bg-white/90 text-gray-500 p-2 rounded-full shadow-sm backdrop-blur-sm hover:bg-white"
+            >
+              <PencilLine size={16} />
+            </button>
+          </div>
+          
+          {value ? (
+            <div className="whitespace-pre-wrap text-gray-800 pr-8">
+              {value.length > 300 
+                ? value.substring(0, 300) + '...' 
+                : value}
+            </div>
+          ) : (
+            <div className="text-gray-400 flex items-center h-full justify-center">
+              <div className="flex flex-col items-center space-y-2">
+                <Edit size={24} />
+                <p>Tap to enter job description</p>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Immersive editor */}
+        <AnimatePresence>
+          {isImmersiveEditing && (
+            <ImmersiveEditor
+              value={value}
+              onChange={setValue}
+              onDone={closeImmersiveEditor}
+              onCancel={closeImmersiveEditor}
+              placeholder="Paste or type the job description here..."
+              label="Job Description"
+              instruction="Fill in details from the job posting"
+              minHeight="70vh"
+            />
+          )}
+        </AnimatePresence>
         
         {/* Analysis progress display */}
         {isAnalyzing && analysisSteps.length > 0 && (
