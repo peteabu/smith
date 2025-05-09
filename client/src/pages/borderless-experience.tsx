@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BorderlessCanvas, BorderlessContent } from '@/components/borderless-canvas';
-import { Search, Check, Plus, ChevronDown, ChevronRight, Edit } from 'lucide-react';
+import { Search, Check, Plus, ChevronDown, ChevronRight, Edit, ArrowRight } from 'lucide-react';
 import haptics from '@/lib/haptics';
 import { analyzeJobDescription } from '@/lib/cv-analyzer';
 import { useToast } from '@/hooks/use-toast';
 import { KeywordAnalysisResult } from '@/lib/cv-analyzer';
+import { FloatingActionButton } from '@/components/floating-action-button';
 
 /**
  * A completely reimagined mobile experience based on borderless design principles.
@@ -219,13 +220,9 @@ export function BorderlessExperience() {
                   )}
                 </AnimatePresence>
                 
-                <BorderlessContent
-                  content=""
-                  onContentChange={() => {}}
-                  contentType="title"
-                  placeholder="Job Description"
-                  isEditing={false}
-                />
+                <h1 className="text-2xl font-semibold text-gray-800 mb-2">
+                  Job Description
+                </h1>
                 
                 <div className="mt-3 mb-4">
                   <BorderlessContent
@@ -235,24 +232,18 @@ export function BorderlessExperience() {
                     onFinishEdit={handleJobDescriptionEditFinish}
                     contentType="paragraph"
                     placeholder="Tap to enter or paste the job description..."
-                    actionLabel={jobDescription.length >= 50 ? "Analyze Keywords" : undefined}
-                    onAction={jobDescription.length >= 50 ? handleAnalyze : undefined}
                   />
                 </div>
                 
-                {/* Analysis button - shown only when not already triggered by content action */}
-                {(jobDescription.length >= 50 && !isAnalyzing && !didFirstEdit) && (
-                  <motion.button
-                    className="flex items-center justify-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-full w-full mt-6 shadow-sm"
-                    whileTap={{ scale: 0.95 }}
+                {/* Floating action button for job description analysis */}
+                {!isAnalyzing && jobDescription.length >= 50 && (
+                  <FloatingActionButton
+                    icon={<ArrowRight className="h-6 w-6" />}
                     onClick={handleAnalyze}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    <Search className="h-5 w-5" />
-                    <span>Analyze Job Description</span>
-                  </motion.button>
+                    position="bottom-right"
+                    tooltip="Analyze job description"
+                    size="large"
+                  />
                 )}
                 
                 {/* Loading indicator */}
@@ -297,13 +288,9 @@ export function BorderlessExperience() {
                   </motion.div>
                 )}
                 
-                <BorderlessContent
-                  content=""
-                  onContentChange={() => {}}
-                  contentType="title"
-                  placeholder="Your Resume"
-                  isEditing={false}
-                />
+                <h1 className="text-2xl font-semibold text-gray-800 mb-2">
+                  Your Resume
+                </h1>
                 
                 <div className="mt-3 mb-4">
                   <BorderlessContent
@@ -311,16 +298,25 @@ export function BorderlessExperience() {
                     onContentChange={handleResumeTextChange}
                     contentType="paragraph"
                     placeholder="Tap to enter or paste your resume..."
-                    actionLabel={resumeText && analysisResult ? "Optimize Resume" : undefined}
-                    onAction={() => {
+                  />
+                </div>
+                
+                {/* Floating action button for resume optimization */}
+                {resumeText && analysisResult && (
+                  <FloatingActionButton
+                    icon={<Edit className="h-6 w-6" />}
+                    onClick={() => {
                       toast({
                         title: "Coming Soon",
                         description: "Resume optimization will be available soon!"
                       });
                       haptics.impact();
                     }}
+                    position="bottom-right"
+                    tooltip="Optimize your resume"
+                    size="large"
                   />
-                </div>
+                )}
                 
                 <div className="flex justify-center my-6">
                   <motion.button
@@ -397,12 +393,9 @@ export function BorderlessExperience() {
                   </div>
                 </motion.div>
                 
-                <BorderlessContent
-                  content="Analysis Results"
-                  onContentChange={() => {}}
-                  contentType="title"
-                  isEditing={false}
-                />
+                <h1 className="text-2xl font-semibold text-gray-800 mb-2">
+                  Analysis Results
+                </h1>
                 
                 {/* Keywords card with improved interaction */}
                 <motion.div 
@@ -515,31 +508,14 @@ export function BorderlessExperience() {
                   </motion.div>
                 )}
                 
-                {/* Next step action buttons */}
-                <div className="pt-2 space-y-3">
-                  <motion.button
-                    className="flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-full w-full shadow-sm"
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleSectionChange('resume')}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    <Edit className="h-5 w-5" />
-                    <span>Optimize My Resume</span>
-                  </motion.button>
-                  
-                  <motion.button
-                    className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 px-6 py-3 rounded-full w-full shadow-sm"
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleSectionChange('job')}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 }}
-                  >
-                    <span>Edit Job Description</span>
-                  </motion.button>
-                </div>
+                {/* Floating action button for moving to resume optimization */}
+                <FloatingActionButton
+                  icon={<Edit className="h-6 w-6" />}
+                  onClick={() => handleSectionChange('resume')}
+                  position="bottom-right"
+                  tooltip="Go to resume optimization"
+                  size="large"
+                />
               </motion.div>
             )}
           </AnimatePresence>

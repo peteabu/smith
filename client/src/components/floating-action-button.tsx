@@ -57,8 +57,8 @@ export function FloatingActionButton({
   
   // Color classes
   const colorClasses = {
-    primary: 'bg-brown-dark text-white hover:bg-opacity-90',
-    secondary: 'bg-paper text-brown-dark border border-brown/30 hover:bg-opacity-90',
+    primary: 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800',
+    secondary: 'bg-white text-gray-800 border border-gray-200 hover:bg-gray-50 active:bg-gray-100',
     custom: ''
   };
   
@@ -182,7 +182,7 @@ export function FloatingActionButton({
       
       {/* Label */}
       {label && showLabel && (
-        <div className="absolute top-full mt-1 left-1/2 transform -translate-x-1/2 text-xs text-center font-medium text-brown-dark">
+        <div className="absolute top-full mt-1 left-1/2 transform -translate-x-1/2 text-xs text-center font-medium text-gray-700">
           {label}
         </div>
       )}
