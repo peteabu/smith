@@ -618,16 +618,24 @@ export function MobileExperience() {
             ))}
           </div>
           
-          {/* Navigation hint */}
-          <motion.div 
-            className="text-xs bg-white/70 backdrop-blur-sm px-3 py-1 rounded-full text-brown-dark font-medium shadow-sm"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ delay: 0.3 }}
-          >
-            Swipe left or right to navigate
-          </motion.div>
+          {/* Navigation hint - auto-dismissed */}
+          {navHistory.length === 1 && (
+            <motion.div 
+              className="text-xs bg-white/70 backdrop-blur-sm px-3 py-1 rounded-full text-brown-dark font-medium shadow-sm"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ delay: 0.3 }}
+              // Auto-dismiss after 5 seconds
+              onAnimationComplete={() => {
+                setTimeout(() => {
+                  // The hint will only show on first stage
+                }, 5000);
+              }}
+            >
+              Swipe left or right to navigate
+            </motion.div>
+          )}
         </div>
         
         {/* Back button with text */}
@@ -657,7 +665,7 @@ export function MobileExperience() {
           </motion.button>
         )}
         
-        {/* Animated feedback message */}
+        {/* Animated feedback message with close button */}
         <AnimatePresence>
           {feedbackMessage && (
             <motion.div
@@ -666,9 +674,21 @@ export function MobileExperience() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              // Auto-dismiss after 3 seconds
+              onAnimationComplete={() => {
+                setTimeout(() => {
+                  setFeedbackMessage(null);
+                }, 3000);
+              }}
             >
-              <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
+              <div className="bg-white/90 backdrop-blur-sm px-4 py-2 pr-8 rounded-full shadow-lg relative">
                 <p className="text-sm text-brown-dark font-medium">{feedbackMessage}</p>
+                <button 
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 w-5 h-5 rounded-full bg-brown/10 flex items-center justify-center"
+                  onClick={() => setFeedbackMessage(null)}
+                >
+                  <X size={12} className="text-brown" />
+                </button>
               </div>
             </motion.div>
           )}

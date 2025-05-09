@@ -35,6 +35,7 @@ interface TextareaInputProps extends CommonInputProps, Omit<TextareaHTMLAttribut
 
 /**
  * Premium iOS/Android-like text input with advanced animation
+ * Now with modern borderless design
  */
 export function MobileTextInput({
   label,
@@ -68,16 +69,16 @@ export function MobileTextInput({
     }
   }, [isFocused, props.value]);
   
-  // Variant-specific styles
+  // Variant-specific styles - with modern borderless design
   const getVariantClasses = () => {
     switch (variant) {
       case 'filled':
-        return 'bg-paper rounded-t-lg border-b-2 border-brown/30 focus-within:border-brown px-3 pt-5 pb-2';
+        return 'bg-paper/30 rounded-xl border-b border-brown/20 focus-within:border-brown/40 px-3 pt-5 pb-2';
       case 'minimal':
-        return 'bg-transparent border-b border-brown/30 focus-within:border-brown px-1 pb-1';
+        return 'bg-transparent border-b border-brown/10 focus-within:border-brown/30 px-1 pb-1';
       case 'outlined':
       default:
-        return 'bg-white border border-brown/30 focus-within:border-brown rounded-lg px-3 py-2.5';
+        return 'bg-white/60 backdrop-blur-sm shadow-sm border-0 focus-within:shadow rounded-xl px-4 py-3';
     }
   };
 
@@ -122,7 +123,7 @@ export function MobileTextInput({
           relative flex items-center
           ${getVariantClasses()}
           transition-all duration-200
-          ${isFocused ? 'shadow-sm' : ''}
+          ${isFocused ? 'shadow' : ''}
           ${error ? 'border-red-500 focus-within:border-red-500' : ''}
           ${inputWrapperClassName}
         `}
@@ -210,6 +211,7 @@ export function MobileTextInput({
 
 /**
  * Premium iOS/Android-like textarea with advanced animation
+ * Now with modern borderless design
  */
 export function MobileTextarea({
   label,
@@ -267,16 +269,16 @@ export function MobileTextarea({
     }
   }, [props.value, autoExpand, maxRows]);
 
-  // Variant-specific styles
+  // Variant-specific styles - with modern borderless design
   const getVariantClasses = () => {
     switch (variant) {
       case 'filled':
-        return 'bg-paper rounded-t-lg border-b-2 border-brown/30 focus-within:border-brown px-3 pt-5 pb-2';
+        return 'bg-paper/30 rounded-xl border-b border-brown/20 focus-within:border-brown/40 px-3 pt-5 pb-2';
       case 'minimal':
-        return 'bg-transparent border-b border-brown/30 focus-within:border-brown px-1 pb-1';
+        return 'bg-transparent border-b border-brown/10 focus-within:border-brown/30 px-1 pb-1';
       case 'outlined':
       default:
-        return 'bg-white border border-brown/30 focus-within:border-brown rounded-lg px-3 py-2.5';
+        return 'bg-white/60 backdrop-blur-sm shadow-sm border-0 focus-within:shadow rounded-xl px-4 py-3';
     }
   };
 
@@ -321,7 +323,7 @@ export function MobileTextarea({
           relative
           ${getVariantClasses()}
           transition-all duration-200
-          ${isFocused ? 'shadow-sm' : ''}
+          ${isFocused ? 'shadow' : ''}
           ${error ? 'border-red-500 focus-within:border-red-500' : ''}
           ${inputWrapperClassName}
         `}
