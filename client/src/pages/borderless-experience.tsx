@@ -416,9 +416,9 @@ export function BorderlessExperience() {
   };
   
   return (
-    <div className="fixed inset-0 w-full h-full bg-cream overflow-hidden">
+    <div className="fixed inset-0 w-full h-full bg-gray-50 overflow-hidden">
       <BorderlessCanvas>
-        <div className="px-5 pt-12 pb-40 min-h-screen bg-paper-texture">
+        <div className="px-5 pt-12 pb-24 min-h-screen">
           {/* Top navigation */}
           <div className="flex items-center mb-8 space-x-4 overflow-x-auto no-scrollbar">
             <motion.button
@@ -777,87 +777,9 @@ export function BorderlessExperience() {
                   </div>
                 </motion.div>
                 
-                <h1 className="text-2xl font-semibold text-gray-800 mb-4">
+                <h1 className="text-2xl font-semibold text-gray-800 mb-2">
                   Analysis Results
                 </h1>
-                
-                {/* Analysis steps visualization (Craft.do inspired) */}
-                <motion.div
-                  className="bg-white rounded-xl overflow-hidden shadow-sm mb-5"
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <div className="p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-purple-100 rounded-full p-1">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M7.5 21L7.37145 21.1531C7.45447 21.248 7.57617 21.3 7.70306 21.3C7.82994 21.3 7.95164 21.248 8.03466 21.1531L7.5 21ZM3 16.5L2.84689 16.3715C2.752 16.4545 2.7 16.5762 2.7 16.7031C2.7 16.8299 2.752 16.9516 2.84689 17.0346L3 16.5ZM7.5 12L8.03466 11.8469C7.95164 11.752 7.82994 11.7 7.70306 11.7C7.57617 11.7 7.45447 11.752 7.37145 11.8469L7.5 12ZM12 16.5L11.8469 17.0347C11.9516 17.128 12.1 17.18 12.25 17.18C12.4 17.18 12.5484 17.128 12.6531 17.0347L12 16.5ZM16.5 12L17.0347 11.8469C16.952 11.752 16.8303 11.7 16.7034 11.7C16.5766 11.7 16.4549 11.752 16.3718 11.8469L16.5 12ZM21 16.5L20.8469 16.6531C20.9516 16.7464 21.1 16.7984 21.25 16.7984C21.4 16.7984 21.5484 16.7464 21.6531 16.6531L21 16.5ZM16.5 21L16.3718 20.8469C16.2887 20.9418 16.1671 20.9938 16.0402 20.9938C15.9134 20.9938 15.7917 20.9418 15.7086 20.8469L16.5 21ZM12 16.5L12.1531 16.3715C12.058 16.2885 11.9363 16.2365 11.8094 16.2365C11.6826 16.2365 11.5609 16.2885 11.4658 16.3715L12 16.5ZM7.62855 20.8469L3.15311 16.3715L2.84689 16.6285L7.32145 21.1531L7.62855 20.8469ZM3.15311 17.0346L7.62855 12.1531L7.37145 11.8469L2.84689 16.6531L3.15311 17.0346ZM6.96534 12.1531L11.8469 17.0347L12.1531 15.9653L7.32145 11.8469L6.96534 12.1531ZM12.6531 17.0347L17.0347 11.8469L15.9653 12.1531L11.8469 15.9653L12.6531 17.0347ZM16.3718 12.1531L20.8469 16.6531L21.1531 16.3469L16.6282 11.8469L16.3718 12.1531ZM21.6531 16.6531L17.0347 20.8469L15.9653 21.1531L20.8469 16.3469L21.6531 16.6531ZM15.7086 20.8469L11.4658 16.3715L12.5342 16.6285L16.6282 21.1531L15.7086 20.8469Z" fill="#8B5CF6"/>
-                          </svg>
-                        </div>
-                        <h3 className="font-medium text-gray-900">Analysis Process</h3>
-                      </div>
-                      <div className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full flex items-center">
-                        <Check className="h-3 w-3 mr-1" /> Completed
-                      </div>
-                    </div>
-                    
-                    {/* Analysis steps visualization */}
-                    <div className="space-y-3 mt-2">
-                      {analysisSteps.map((step, index) => (
-                        <div key={index} className="flex gap-3 items-start">
-                          {step.status === 'completed' ? (
-                            <div className="bg-green-100 rounded-full p-1 mt-0.5 flex-shrink-0">
-                              <Check className="h-3 w-3 text-green-600" />
-                            </div>
-                          ) : step.status === 'in-progress' ? (
-                            <div className="rounded-full p-1 mt-0.5 flex-shrink-0">
-                              <svg className="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                            </div>
-                          ) : (
-                            <div className="bg-gray-100 rounded-full p-1 mt-0.5 flex-shrink-0">
-                              <Clock className="h-3 w-3 text-gray-400" />
-                            </div>
-                          )}
-                          <div className="flex-1">
-                            <p className={`text-sm ${step.status === 'completed' ? 'text-gray-800' : step.status === 'in-progress' ? 'text-blue-700' : 'text-gray-400'}`}>
-                              {step.step}
-                            </p>
-                            {step.result && (
-                              <div className="mt-1 text-xs text-gray-500 bg-gray-50 p-2 rounded-md">
-                                {step.result}
-                              </div>
-                            )}
-                            {step.sources && step.sources.length > 0 && (
-                              <div className="mt-1 flex gap-1">
-                                {step.sources.slice(0, 2).map((source, i) => (
-                                  <span key={i} className="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">
-                                    Source {i+1}
-                                  </span>
-                                ))}
-                                {step.sources.length > 2 && (
-                                  <span className="text-xs text-blue-500">
-                                    +{step.sources.length - 2} more
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {analysisSteps.length === 0 && (
-                        <div className="text-center py-4">
-                          <p className="text-sm text-gray-500">No analysis steps recorded</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
                 
                 {/* Keywords card with improved interaction */}
                 <motion.div 
