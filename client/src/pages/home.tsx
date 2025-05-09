@@ -98,17 +98,20 @@ export default function Home() {
 
   // Calculate the current progress percentage
   const calculateProgress = () => {
+    // If CV is stored, we have different step progression
+    const hasCV = hasStoredCV();
+    
     switch (activeStep) {
       case WorkflowStep.UPLOAD_CV:
-        return 25;
+        return 25; // This will only show for first-time users
       case WorkflowStep.ANALYZE_JOB:
-        return cvId ? 50 : 25;
+        return hasCV ? 33 : 50; // First step for returning users, second for new users
       case WorkflowStep.OPTIMIZE:
-        return jobAnalysis ? 75 : 50;
+        return hasCV ? 66 : 75; // Second step for returning users, third for new users
       case WorkflowStep.RESULTS:
         return 100;
       default:
-        return 25;
+        return hasCV ? 33 : 25;
     }
   };
   
@@ -155,19 +158,22 @@ export default function Home() {
             <div className="mb-6 relative">
               <div className="absolute top-0 left-0 w-full h-full bg-paper -z-10 paper-shadow"></div>
               <div className="flex overflow-x-auto mobile-scroll w-full font-mono text-xs sm:text-sm border-b border-brown/30">
-                <button
-                  type="button"
-                  onClick={() => setActiveStep(WorkflowStep.UPLOAD_CV)}
-                  className={`flex items-center gap-2 py-3 px-4 flex-grow border-r border-brown/30 mobile-button touch-feedback ${
-                    activeStep === WorkflowStep.UPLOAD_CV 
-                      ? 'bg-white text-brown-dark font-bold' 
-                      : 'text-brown hover:bg-white/50'
-                  }`}
-                >
-                  <FileText className="h-4 w-4" />
-                  <span className={isMobile ? "hidden" : "block"}>Resume</span>
-                  <span className="ml-1 text-xs border border-brown text-brown h-5 w-5 flex items-center justify-center">1</span>
-                </button>
+                {/* Only show Resume step if no CV is saved yet */}
+                {!hasStoredCV() && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveStep(WorkflowStep.UPLOAD_CV)}
+                    className={`flex items-center gap-2 py-3 px-4 flex-grow border-r border-brown/30 mobile-button touch-feedback ${
+                      activeStep === WorkflowStep.UPLOAD_CV 
+                        ? 'bg-white text-brown-dark font-bold' 
+                        : 'text-brown hover:bg-white/50'
+                    }`}
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span className={isMobile ? "hidden" : "block"}>Resume</span>
+                    <span className="ml-1 text-xs border border-brown text-brown h-5 w-5 flex items-center justify-center">1</span>
+                  </button>
+                )}
                 
                 <button
                   type="button"
@@ -181,7 +187,7 @@ export default function Home() {
                 >
                   <Edit className="h-4 w-4" />
                   <span className={isMobile ? "hidden" : "block"}>Job Description</span>
-                  <span className="ml-1 text-xs border border-brown text-brown h-5 w-5 flex items-center justify-center">2</span>
+                  <span className="ml-1 text-xs border border-brown text-brown h-5 w-5 flex items-center justify-center">{hasStoredCV() ? "1" : "2"}</span>
                 </button>
                 
                 <button
@@ -196,7 +202,7 @@ export default function Home() {
                 >
                   <LineChart className="h-4 w-4" />
                   <span className={isMobile ? "hidden" : "block"}>Analysis</span>
-                  <span className="ml-1 text-xs border border-brown text-brown h-5 w-5 flex items-center justify-center">3</span>
+                  <span className="ml-1 text-xs border border-brown text-brown h-5 w-5 flex items-center justify-center">{hasStoredCV() ? "2" : "3"}</span>
                 </button>
                 
                 <button
@@ -211,17 +217,19 @@ export default function Home() {
                 >
                   <Download className="h-4 w-4" />
                   <span className={isMobile ? "hidden" : "block"}>Results</span>
-                  <span className="ml-1 text-xs border border-brown text-brown h-5 w-5 flex items-center justify-center">4</span>
+                  <span className="ml-1 text-xs border border-brown text-brown h-5 w-5 flex items-center justify-center">{hasStoredCV() ? "3" : "4"}</span>
                 </button>
               </div>
             </div>
             
-            {/* Step 1: Upload CV */}
-            <TabsContent value={WorkflowStep.UPLOAD_CV} className="space-y-6 mt-0">
-              <FileUpload onCvUploaded={handleCvUploaded} />
-            </TabsContent>
+            {/* Step 1: Upload CV - Only show if no CV is saved */}
+            {!hasStoredCV() && (
+              <TabsContent value={WorkflowStep.UPLOAD_CV} className="space-y-6 mt-0">
+                <FileUpload onCvUploaded={handleCvUploaded} />
+              </TabsContent>
+            )}
             
-            {/* Step 2: Job Description Analysis */}
+            {/* Job Description Analysis - Step 1 or 2 depending on if CV exists */}
             <TabsContent value={WorkflowStep.ANALYZE_JOB} className="space-y-6 mt-0">
               <JobDescription 
                 cvId={cvId} 
@@ -229,7 +237,7 @@ export default function Home() {
               />
             </TabsContent>
             
-            {/* Step 3: Keyword Analysis and Optimization */}
+            {/* Analysis and Optimization - Step 2 or 3 depending on if CV exists */}
             <TabsContent value={WorkflowStep.OPTIMIZE} className="space-y-6 mt-0">
               <KeywordAnalysis 
                 analysis={jobAnalysis} 
@@ -244,7 +252,7 @@ export default function Home() {
               </div>
             </TabsContent>
             
-            {/* Step 4: Final Results */}
+            {/* Final Results - Step 3 or 4 depending on if CV exists */}
             <TabsContent value={WorkflowStep.RESULTS} className="space-y-6 mt-0">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <KeywordAnalysis 
