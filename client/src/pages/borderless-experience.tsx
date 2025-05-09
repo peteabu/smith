@@ -29,7 +29,7 @@ interface AnalysisProgress {
 
 export function BorderlessExperience() {
   // App state
-  const [activeSection, setActiveSection] = useState<'job' | 'resume' | 'analysis' | 'result'>('job');
+  const [activeSection, setActiveSection] = useState<'resume' | 'job' | 'analysis' | 'result'>('resume');
   const [jobDescription, setJobDescription] = useState('');
   const [resumeText, setResumeText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -92,14 +92,25 @@ export function BorderlessExperience() {
   }, [showIntroGuide]);
 
   // Handle section change with guided experience
-  const handleSectionChange = (section: 'job' | 'resume' | 'analysis' | 'result') => {
+  const handleSectionChange = (section: 'resume' | 'job' | 'analysis' | 'result') => {
     // PROPER STEP-BY-STEP FLOW:
-    // Job (enter job description) -> Analyze -> Analysis (view results) -> Resume (enter resume) -> Optimize -> Result
+    // Resume (enter/upload resume) -> Job (enter job description) -> Analyze -> Analysis (view results) -> Optimize -> Result
 
     // Prevent skipping steps with clear guidance
+    if (section === 'job' && !resumeText) {
+      // Can't go to job without entering resume first
+      toast({
+        title: "First step: Resume",
+        description: "Enter your resume text before continuing",
+        duration: 3000
+      });
+      haptics.warning();
+      setActiveSection('resume');
+      return;
+    }
+    
     if (section === 'analysis' && !analysisResult) {
       // Can't go to analysis without analyzing the job description first
-      // Instead, guide them to complete the job description
       if (jobDescription.length < 50) {
         toast({
           title: "Complete the job description",
@@ -127,28 +138,6 @@ export function BorderlessExperience() {
           }, 2000);
         }
       }
-      return;
-    } 
-    else if (section === 'resume' && !jobDescription) {
-      // Can't go to resume without a job description
-      toast({
-        title: "First step: Job Description",
-        description: "Enter a job description before continuing",
-        duration: 3000
-      });
-      haptics.warning();
-      setActiveSection('job');
-      return;
-    } 
-    else if (section === 'resume' && !analysisResult) {
-      // Can't go to resume without analyzing the job
-      toast({
-        title: "Analyze job first",
-        description: "Please analyze the job description before continuing",
-        duration: 3000
-      });
-      haptics.warning();
-      setActiveSection('job');
       return;
     } 
     else if (section === 'result' && !optimizationResult) {
@@ -431,18 +420,18 @@ export function BorderlessExperience() {
           {/* Top navigation */}
           <div className="flex items-center mb-8 space-x-4 overflow-x-auto no-scrollbar">
             <motion.button
-              className={`px-4 py-2 rounded-full text-sm ${activeSection === 'job' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleSectionChange('job')}
-            >
-              Job
-            </motion.button>
-            <motion.button
               className={`px-4 py-2 rounded-full text-sm ${activeSection === 'resume' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleSectionChange('resume')}
             >
               Resume
+            </motion.button>
+            <motion.button
+              className={`px-4 py-2 rounded-full text-sm ${activeSection === 'job' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleSectionChange('job')}
+            >
+              Job
             </motion.button>
             <motion.button
               className={`px-4 py-2 rounded-full text-sm ${activeSection === 'analysis' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}
@@ -480,19 +469,23 @@ export function BorderlessExperience() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                     >
-                      <h3 className="text-blue-700 text-sm font-medium mb-2">How to use this interface</h3>
+                      <h3 className="text-blue-700 text-sm font-medium mb-2">Resume Optimization Steps</h3>
                       <ul className="text-xs text-blue-600 space-y-1.5">
                         <li className="flex items-start">
                           <span className="bg-blue-500 text-white rounded-full w-4 h-4 inline-flex items-center justify-center text-[10px] mr-1.5 mt-0.5">1</span>
-                          <span>Tap on the job description area to start editing</span>
+                          <span>Enter your resume text</span>
                         </li>
                         <li className="flex items-start">
                           <span className="bg-blue-500 text-white rounded-full w-4 h-4 inline-flex items-center justify-center text-[10px] mr-1.5 mt-0.5">2</span>
-                          <span>Paste or type the job description content</span>
+                          <span>Add the job description</span>
                         </li>
                         <li className="flex items-start">
                           <span className="bg-blue-500 text-white rounded-full w-4 h-4 inline-flex items-center justify-center text-[10px] mr-1.5 mt-0.5">3</span>
-                          <span>Tap "Analyze" when ready to extract keywords</span>
+                          <span>Analyze to extract keywords</span>
+                        </li>
+                        <li className="flex items-start">
+                          <span className="bg-blue-500 text-white rounded-full w-4 h-4 inline-flex items-center justify-center text-[10px] mr-1.5 mt-0.5">4</span>
+                          <span>Optimize your resume for the job</span>
                         </li>
                       </ul>
                     </motion.div>
@@ -500,7 +493,7 @@ export function BorderlessExperience() {
                 </AnimatePresence>
                 
                 <h1 className="text-2xl font-semibold text-gray-800 mb-2">
-                  Job Description
+                  Step 2: Job Description
                 </h1>
                 
                 <div className="mt-3 mb-4">
@@ -620,9 +613,9 @@ export function BorderlessExperience() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
                   >
-                    <h3 className="text-blue-700 text-sm font-medium mb-2">Resume Optimization</h3>
+                    <h3 className="text-blue-700 text-sm font-medium mb-2">Step 1: Enter Your Resume</h3>
                     <p className="text-xs text-blue-600 mb-1">
-                      Paste your resume to optimize it based on the job description keywords.
+                      Paste your resume text here. After this, you'll add a job description and optimize your resume for that job.
                     </p>
                   </motion.div>
                 )}
@@ -796,7 +789,7 @@ export function BorderlessExperience() {
                 </motion.div>
                 
                 <h1 className="text-2xl font-semibold text-gray-800 mb-2">
-                  Analysis Results
+                  Step 3: Analysis Results
                 </h1>
                 
                 {/* Keywords card with improved interaction */}
@@ -966,7 +959,7 @@ export function BorderlessExperience() {
                 </motion.div>
                 
                 <h1 className="text-2xl font-semibold text-gray-800 mb-2">
-                  Optimized Resume
+                  Step 4: Your Optimized Resume
                 </h1>
                 
                 {/* Before and After comparison */}
