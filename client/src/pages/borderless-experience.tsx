@@ -7,6 +7,7 @@ import { analyzeJobDescription } from '@/lib/cv-analyzer';
 import { useToast } from '@/hooks/use-toast';
 import { KeywordAnalysisResult } from '@/lib/cv-analyzer';
 import { FloatingActionButton } from '@/components/floating-action-button';
+import { FloatingReasoningTimeline } from '@/components/floating-reasoning-timeline';
 import { io, Socket } from 'socket.io-client';
 
 /**
@@ -417,6 +418,14 @@ export function BorderlessExperience() {
   
   return (
     <div className="fixed inset-0 w-full h-full bg-gray-50 overflow-hidden">
+      {/* Floating reasoning timeline - shown during analysis */}
+      {(isAnalyzing || analysisSteps.length > 0) && (
+        <FloatingReasoningTimeline 
+          steps={analysisSteps} 
+          isAnalyzing={isAnalyzing}
+        />
+      )}
+      
       <BorderlessCanvas>
         <div className="px-5 pt-12 pb-24 min-h-screen">
           {/* Top navigation */}
