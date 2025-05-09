@@ -25,10 +25,10 @@ interface ResumePreviewProps {
 
 export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
   const { toast } = useToast();
-  const [isExporting, setIsExporting] = useState<'text' | 'markdown' | 'docx' | null>(null);
+  const [isExporting, setIsExporting] = useState<'text' | 'markdown' | 'docx' | 'pdf' | null>(null);
   const [isCopying, setIsCopying] = useState<string | null>(null);
 
-  const handleExport = async (format: 'text' | 'markdown' | 'docx', useOriginal: boolean = false) => {
+  const handleExport = async (format: 'text' | 'markdown' | 'docx' | 'pdf', useOriginal: boolean = false) => {
     if (!optimizedCV?.id) return;
     
     setIsExporting(format);
@@ -213,6 +213,10 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
                       <DropdownMenuItem onClick={() => handleExport('docx')}>
                         <File className="h-4 w-4 mr-2" />
                         <span>Word-compatible (.html)</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleExport('pdf')}>
+                        <FileText className="h-4 w-4 mr-2" />
+                        <span>PDF (.pdf)</span>
                       </DropdownMenuItem>
                     </DropdownMenuSubContent>
                   </DropdownMenuSub>

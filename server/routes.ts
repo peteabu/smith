@@ -573,8 +573,9 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.get('/api/cv/export/:id', async (req: Request, res: Response) => {
     try {
       const optimizedCvId = parseInt(req.params.id);
-      const format = (req.query.format as 'text' | 'markdown' | 'docx') || 'text';
+      let format = (req.query.format as 'text' | 'markdown' | 'docx' | 'pdf') || 'text';
       const useOriginal = req.query.original === 'true'; // Option to get original CV content
+      const pdfFormat = req.query.pdfFormat as 'pdf' | 'latex' || 'pdf';
       
       console.log(`CV Export requested - ID: ${optimizedCvId}, Format: ${format}, Use Original: ${useOriginal}`);
       
@@ -719,6 +720,33 @@ export async function registerRoutes(app: Express): Promise<void> {
         
         return plainText;
       };
+      
+      // Handle PDF export format
+      if (format === 'pdf') {
+        try {
+          console.log(`Creating PDF resume with format: ${pdfFormat}`);
+          
+          // Convert HTML content to clean text for PDF creation
+          const cleanedText = cleanText(contentToUse);
+          
+          // Generate PDF using our createPDF function
+          const pdfBuffer = createPDF(contentToUse, pdfFormat);
+          
+          // Set headers for PDF download
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `attachment; filename="${useOriginal ? 'original' : 'optimized'}-cv-${new Date().toISOString().slice(0, 10)}.pdf"`);
+          res.setHeader('Cache-Control', 'no-cache');
+          
+          // Send the PDF buffer
+          res.send(pdfBuffer);
+          console.log('PDF resume exported successfully');
+          return;
+        } catch (pdfError) {
+          console.error('Error generating PDF:', pdfError);
+          // If PDF generation fails, fall back to text format
+          format = 'text';
+        }
+      }
       
       let exportContent = '';
       let mimeType = 'text/plain';
