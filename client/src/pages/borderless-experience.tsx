@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BorderlessCanvas, BorderlessContent } from '@/components/borderless-canvas';
-import { Search, Check, Plus, ChevronDown, ChevronRight, Edit, ArrowRight, Clock } from 'lucide-react';
+import { Search, Check, Plus, ChevronDown, ChevronRight, Edit, ArrowRight, Clock, PlusCircle, Download } from 'lucide-react';
 import haptics from '@/lib/haptics';
 import { analyzeJobDescription } from '@/lib/cv-analyzer';
 import { useToast } from '@/hooks/use-toast';
@@ -178,6 +178,9 @@ export function BorderlessExperience() {
       return;
     }
     
+    // Set optimizing state to show loading UI
+    setIsOptimizing(true);
+    
     // Add feedback for user
     toast({
       title: "Starting optimization",
@@ -222,22 +225,21 @@ export function BorderlessExperience() {
         throw new Error('Failed to optimize resume');
       }
       
-      const optimizationResult = await optimizeResponse.json();
+      const optimizedResult = await optimizeResponse.json();
       
       // Success notification
       toast({
         title: "Resume Optimized",
-        description: `Match rate: ${optimizationResult.matchRate}%`,
+        description: `Match rate: ${optimizedResult.matchRate}%`,
         duration: 5000
       });
       haptics.success();
       
-      // Navigate to analysis section to show results
-      setActiveSection('analysis');
+      // Set the optimization result in state
+      setOptimizationResult(optimizedResult);
       
-      // Here you would typically update the UI to show optimization results
-      // For now, let's set this in state so we can reference it later
-      setOptimizationResult(optimizationResult);
+      // Navigate to result section to show the optimized resume
+      setActiveSection('result');
       
     } catch (error) {
       toast({
@@ -246,6 +248,9 @@ export function BorderlessExperience() {
         variant: "destructive"
       });
       haptics.error();
+    } finally {
+      // Reset optimizing state
+      setIsOptimizing(false);
     }
   };
   
@@ -338,7 +343,7 @@ export function BorderlessExperience() {
       <BorderlessCanvas>
         <div className="px-5 pt-12 pb-24 min-h-screen">
           {/* Top navigation */}
-          <div className="flex items-center mb-8 space-x-4">
+          <div className="flex items-center mb-8 space-x-4 overflow-x-auto no-scrollbar">
             <motion.button
               className={`px-4 py-2 rounded-full text-sm ${activeSection === 'job' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}
               whileTap={{ scale: 0.95 }}
@@ -360,6 +365,14 @@ export function BorderlessExperience() {
               disabled={!analysisResult}
             >
               Analysis
+            </motion.button>
+            <motion.button
+              className={`px-4 py-2 rounded-full text-sm ${activeSection === 'result' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleSectionChange('result')}
+              disabled={!optimizationResult}
+            >
+              Result
             </motion.button>
           </div>
           
@@ -539,35 +552,96 @@ export function BorderlessExperience() {
                   <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50">
                     <button
                       className="w-full bg-blue-600 text-white py-4 px-4 rounded-xl font-medium text-lg flex items-center justify-center gap-2"
-                      onClick={() => {
-                        toast({
-                          title: "Coming Soon",
-                          description: "Resume optimization will be available soon!"
-                        });
-                        haptics.impact();
-                      }}
+                      onClick={handleOptimizeResume}
+                      disabled={isOptimizing}
                     >
-                      <Edit className="h-5 w-5" />
-                      <span>Optimize Resume</span>
+                      {isOptimizing ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span>Optimizing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Edit className="h-5 w-5" />
+                          <span>Optimize Resume</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 )}
                 
                 <div className="flex justify-center my-6">
-                  <motion.button
-                    className="flex items-center justify-center gap-2 bg-white shadow-sm border border-gray-200 text-gray-800 px-6 py-3 rounded-full"
+                  <motion.label
+                    className="flex items-center justify-center gap-2 bg-white shadow-sm border border-gray-200 text-gray-800 px-6 py-3 rounded-full cursor-pointer"
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      toast({
-                        title: "Upload Option",
-                        description: "Resume upload feature will be available soon!"
-                      });
-                      haptics.impact();
-                    }}
+                    htmlFor="resume-file-upload"
                   >
+                    <input 
+                      type="file" 
+                      id="resume-file-upload" 
+                      className="hidden" 
+                      accept=".pdf,.doc,.docx,.txt" 
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        
+                        haptics.impact();
+                        toast({
+                          title: "File selected",
+                          description: "Reading resume content..."
+                        });
+                        
+                        try {
+                          // Use existing API to extract text
+                          const reader = new FileReader();
+                          reader.onload = async (event) => {
+                            const base64Content = event.target?.result?.toString().split(',')[1];
+                            if (!base64Content) return;
+                            
+                            const response = await fetch('/api/cv/preview', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                fileContent: base64Content,
+                                fileType: file.type
+                              })
+                            });
+                            
+                            if (!response.ok) {
+                              throw new Error('Failed to extract text from file');
+                            }
+                            
+                            const data = await response.json();
+                            
+                            if (data.extractedText) {
+                              setResumeText(data.extractedText);
+                              toast({
+                                title: "Resume Imported",
+                                description: `Successfully read '${file.name}'`
+                              });
+                              haptics.success();
+                            } else {
+                              throw new Error('Could not extract text from file');
+                            }
+                          };
+                          
+                          reader.readAsDataURL(file);
+                        } catch (error) {
+                          toast({
+                            title: "Import Failed",
+                            description: error instanceof Error ? error.message : "Failed to read resume file",
+                            variant: "destructive"
+                          });
+                          haptics.error();
+                        }
+                      }}
+                    />
                     <Plus className="h-5 w-5" />
                     <span>Upload Resume</span>
-                  </motion.button>
+                  </motion.label>
                 </div>
                 
                 {/* Keywords reminder */}
@@ -679,11 +753,15 @@ export function BorderlessExperience() {
                     <button 
                       className="text-blue-600"
                       onClick={() => {
-                        toast({
-                          title: "Keywords copied",
-                          description: "All keywords copied to clipboard"
-                        });
-                        haptics.impact();
+                        // Copy keywords to clipboard
+                        if (navigator.clipboard) {
+                          navigator.clipboard.writeText(analysisResult.keywords.join(', '));
+                          toast({
+                            title: "Keywords copied",
+                            description: "All keywords copied to clipboard"
+                          });
+                          haptics.impact();
+                        }
                       }}
                     >
                       Copy All
@@ -751,6 +829,167 @@ export function BorderlessExperience() {
                   >
                     <Edit className="h-5 w-5" />
                     <span>Continue to Resume Optimization</span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+            
+            {/* Optimization Results Section */}
+            {activeSection === 'result' && optimizationResult && (
+              <motion.div
+                key="result"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-5 pb-32" // Added padding to prevent content from being hidden
+              >
+                {/* Optimization success message */}
+                <motion.div
+                  className="bg-green-50 border border-green-100 rounded-xl p-4 mb-2"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="bg-green-500 rounded-full p-1 mt-0.5">
+                      <Check className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-green-700 text-sm font-medium mb-1">Resume Optimized</h3>
+                      <p className="text-xs text-green-600">
+                        Your resume has been optimized with a match rate of {optimizationResult.matchRate}%
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+                
+                <h1 className="text-2xl font-semibold text-gray-800 mb-2">
+                  Optimized Resume
+                </h1>
+                
+                {/* Before and After comparison */}
+                <motion.div 
+                  className="bg-white rounded-xl overflow-hidden shadow-sm"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <div className="p-4">
+                    <h3 className="font-medium text-gray-900 mb-2">Comparison</h3>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 rounded-full bg-blue-400 mr-2"></div>
+                        <span className="text-sm text-gray-600">Before: {optimizationResult.beforeMatchRate || 0}%</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 rounded-full bg-green-400 mr-2"></div>
+                        <span className="text-sm text-gray-600">After: {optimizationResult.matchRate}%</span>
+                      </div>
+                    </div>
+                    
+                    {/* Progress bar comparison */}
+                    <div className="space-y-2 mb-3">
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-blue-400"
+                          style={{ width: `${optimizationResult.beforeMatchRate || 0}%` }}
+                        ></div>
+                      </div>
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-green-400"
+                          style={{ width: `${optimizationResult.matchRate}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+                
+                {/* Optimized resume content */}
+                <motion.div 
+                  className="bg-white rounded-xl overflow-hidden shadow-sm"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <div className="p-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="font-medium text-gray-900">Optimized Content</h3>
+                      <div className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full">
+                        AI Improved
+                      </div>
+                    </div>
+                    
+                    <div className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed max-h-[300px] overflow-y-auto border border-gray-100 rounded-md p-3 bg-gray-50">
+                      {optimizationResult.optimizedText}
+                    </div>
+                  </div>
+                  
+                  <div className="border-t border-gray-100 bg-gray-50 px-4 py-2 text-xs text-gray-500 flex justify-between items-center">
+                    <span>Enhanced with AI to match job requirements</span>
+                    <button 
+                      className="text-blue-600"
+                      onClick={() => {
+                        // Copy optimized text to clipboard
+                        if (navigator.clipboard) {
+                          navigator.clipboard.writeText(optimizationResult.optimizedText);
+                          toast({
+                            title: "Content copied",
+                            description: "Optimized resume copied to clipboard"
+                          });
+                          haptics.impact();
+                        }
+                      }}
+                    >
+                      Copy All
+                    </button>
+                  </div>
+                </motion.div>
+                
+                {/* Additions and improvements */}
+                <motion.div 
+                  className="bg-white rounded-xl overflow-hidden shadow-sm"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <div className="p-4">
+                    <h3 className="font-medium text-gray-900 mb-2">Improvements Made</h3>
+                    <ul className="space-y-2">
+                      {optimizationResult.improvements && optimizationResult.improvements.map((improvement: string, i: number) => (
+                        <li key={i} className="flex items-start gap-1.5">
+                          <div className="text-green-500 mt-0.5">
+                            <PlusCircle className="h-4 w-4" />
+                          </div>
+                          <div className="text-sm text-gray-700">{improvement}</div>
+                        </li>
+                      ))}
+                      {!optimizationResult.improvements && (
+                        <li className="text-sm text-gray-700">Your resume has been optimized to better match the job requirements.</li>
+                      )}
+                    </ul>
+                  </div>
+                </motion.div>
+                
+                {/* Sticky action bar for results section - ALWAYS VISIBLE */}
+                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50">
+                  <button
+                    className="w-full bg-green-600 text-white py-4 px-4 rounded-xl font-medium text-lg flex items-center justify-center gap-2"
+                    onClick={() => {
+                      if (navigator.clipboard) {
+                        navigator.clipboard.writeText(optimizationResult.optimizedText);
+                        toast({
+                          title: "Resume copied",
+                          description: "Your optimized resume has been copied to clipboard",
+                          duration: 5000
+                        });
+                        haptics.success();
+                      }
+                    }}
+                  >
+                    <Download className="h-5 w-5" />
+                    <span>Save Optimized Resume</span>
                   </button>
                 </div>
               </motion.div>
