@@ -5,13 +5,32 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
+import { MobileHome } from "@/pages/mobile-home";
+import { useDeviceDetection } from "@/hooks/use-device-detection";
+import { MobileOptimizer } from "@/components/mobile-optimizer";
+import { useEffect } from "react";
+import haptics from "@/lib/haptics";
 
 function Router() {
+  const device = useDeviceDetection();
+  
+  // Trigger initial haptic feedback on app load for mobile devices
+  useEffect(() => {
+    if (device.isMobile) {
+      haptics.impact();
+    }
+  }, [device.isMobile]);
+  
+  // Use mobile or desktop version based on device type
+  const HomeComponent = device.isMobile ? MobileHome : Home;
+  
   return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route component={NotFound} />
-    </Switch>
+    <MobileOptimizer>
+      <Switch>
+        <Route path="/" component={HomeComponent} />
+        <Route component={NotFound} />
+      </Switch>
+    </MobileOptimizer>
   );
 }
 
