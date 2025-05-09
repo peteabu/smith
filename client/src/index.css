@@ -77,7 +77,8 @@
   }
 
   body {
-    @apply font-serif antialiased bg-cream text-moss-dark min-h-screen;
+    @apply antialiased bg-cream text-moss-dark min-h-screen;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
     min-height: -webkit-fill-available;
     touch-action: manipulation;
     overscroll-behavior: none;
@@ -398,22 +399,23 @@
   }
   
   .font-mono {
-    font-family: 'Courier Prime', monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   }
   
   .font-display {
-    font-family: 'Playfair Display', serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 600;
   }
   
   .font-serif {
-    font-family: 'Source Serif Pro', serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
   
   /* Resume styling */
   .optimized-resume h1,
   .optimized-resume h2,
   .optimized-resume h3 {
-    font-family: 'Playfair Display', serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin-top: 1.5rem;
     margin-bottom: 0.75rem;
     color: #5D4E3C;
