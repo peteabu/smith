@@ -999,7 +999,7 @@ export function BorderlessExperience() {
                     <div>
                       <h3 className="text-green-700 text-sm font-medium mb-1">Resume Optimized</h3>
                       <p className="text-xs text-green-600">
-                        Your resume has been optimized with a match rate of {optimizationResult.matchRate}%
+                        Your resume has been optimized with a match rate of {optimizationResult?.matchRate || 0}%
                       </p>
                     </div>
                   </div>
@@ -1021,11 +1021,11 @@ export function BorderlessExperience() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center">
                         <div className="w-4 h-4 rounded-full bg-blue-400 mr-2"></div>
-                        <span className="text-sm text-gray-600">Before: {optimizationResult.beforeMatchRate || 0}%</span>
+                        <span className="text-sm text-gray-600">Before: {optimizationResult?.beforeMatchRate || 0}%</span>
                       </div>
                       <div className="flex items-center">
                         <div className="w-4 h-4 rounded-full bg-green-400 mr-2"></div>
-                        <span className="text-sm text-gray-600">After: {optimizationResult.matchRate}%</span>
+                        <span className="text-sm text-gray-600">After: {optimizationResult?.matchRate || 0}%</span>
                       </div>
                     </div>
                     
@@ -1034,13 +1034,13 @@ export function BorderlessExperience() {
                       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-blue-400"
-                          style={{ width: `${optimizationResult.beforeMatchRate || 0}%` }}
+                          style={{ width: `${optimizationResult?.beforeMatchRate || 0}%` }}
                         ></div>
                       </div>
                       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-green-400"
-                          style={{ width: `${optimizationResult.matchRate}%` }}
+                          style={{ width: `${optimizationResult?.matchRate || 0}%` }}
                         ></div>
                       </div>
                     </div>
@@ -1106,15 +1106,16 @@ export function BorderlessExperience() {
                   <div className="p-4">
                     <h3 className="font-medium text-gray-900 mb-2">Improvements Made</h3>
                     <ul className="space-y-2">
-                      {optimizationResult.improvements && optimizationResult.improvements.map((improvement: string, i: number) => (
-                        <li key={i} className="flex items-start gap-1.5">
-                          <div className="text-green-500 mt-0.5">
-                            <PlusCircle className="h-4 w-4" />
-                          </div>
-                          <div className="text-sm text-gray-700">{improvement}</div>
-                        </li>
-                      ))}
-                      {!optimizationResult.improvements && (
+                      {optimizationResult && optimizationResult.improvements && optimizationResult.improvements.length > 0 ? (
+                        optimizationResult.improvements.map((improvement: string, i: number) => (
+                          <li key={i} className="flex items-start gap-1.5">
+                            <div className="text-green-500 mt-0.5 flex-shrink-0">
+                              <PlusCircle className="h-4 w-4" />
+                            </div>
+                            <div className="text-sm text-gray-700">{improvement}</div>
+                          </li>
+                        ))
+                      ) : (
                         <li className="text-sm text-gray-700">Your resume has been optimized to better match the job requirements.</li>
                       )}
                     </ul>
@@ -1126,7 +1127,7 @@ export function BorderlessExperience() {
                   <button
                     className="w-full bg-green-600 text-white py-4 px-4 rounded-xl font-medium text-lg flex items-center justify-center gap-2"
                     onClick={() => {
-                      if (navigator.clipboard) {
+                      if (navigator.clipboard && optimizationResult && optimizationResult.optimizedText) {
                         navigator.clipboard.writeText(optimizationResult.optimizedText);
                         toast({
                           title: "Resume copied",
@@ -1134,6 +1135,12 @@ export function BorderlessExperience() {
                           duration: 5000
                         });
                         haptics.success();
+                      } else {
+                        toast({
+                          title: "Error",
+                          description: "No content to copy",
+                          variant: "destructive"
+                        });
                       }
                     }}
                   >
