@@ -1,18 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BorderlessCanvas, BorderlessContent } from '@/components/borderless-canvas';
-import { Search, Check, Plus, ChevronDown, ChevronRight, Edit, ArrowRight } from 'lucide-react';
+import { Search, Check, Plus, ChevronDown, ChevronRight, Edit, ArrowRight, Clock } from 'lucide-react';
 import haptics from '@/lib/haptics';
 import { analyzeJobDescription } from '@/lib/cv-analyzer';
 import { useToast } from '@/hooks/use-toast';
 import { KeywordAnalysisResult } from '@/lib/cv-analyzer';
 import { FloatingActionButton } from '@/components/floating-action-button';
+import { io, Socket } from 'socket.io-client';
 
 /**
  * A completely reimagined mobile experience based on borderless design principles.
  * This is not a traditional app with forms and inputs, but a fluid canvas
  * where content is directly manipulated.
  */
+interface AnalysisStep {
+  step: string;
+  status: 'completed' | 'in-progress' | 'pending';
+  result?: string;
+  sources?: string[];
+}
+
+interface AnalysisProgress {
+  analysisId: string;
+  step: AnalysisStep;
+}
+
 export function BorderlessExperience() {
   // App state
   const [activeSection, setActiveSection] = useState<'job' | 'resume' | 'analysis'>('job');
@@ -20,11 +33,48 @@ export function BorderlessExperience() {
   const [resumeText, setResumeText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<KeywordAnalysisResult | null>(null);
+  const [analysisSteps, setAnalysisSteps] = useState<AnalysisStep[]>([]);
+  const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  // Socket reference for real-time updates
+  const socketRef = useRef<Socket | null>(null);
   
   // UI state
   const [showIntroGuide, setShowIntroGuide] = useState(true);
   const [didFirstEdit, setDidFirstEdit] = useState(false);
+  
+  // Setup socket connection for real-time analysis progress
+  useEffect(() => {
+    // Initialize socket connection
+    socketRef.current = io();
+    
+    // Listen for analysis progress updates
+    socketRef.current.on('analysis-progress', (data: AnalysisProgress) => {
+      // Only update if this is for our current analysis
+      if (currentAnalysisId && data.analysisId === currentAnalysisId) {
+        setAnalysisSteps(prevSteps => {
+          const stepIndex = prevSteps.findIndex(s => s.step === data.step.step);
+          if (stepIndex >= 0) {
+            // Update existing step
+            const updatedSteps = [...prevSteps];
+            updatedSteps[stepIndex] = data.step;
+            return updatedSteps;
+          } else {
+            // Add new step
+            return [...prevSteps, data.step];
+          }
+        });
+      }
+    });
+    
+    // Cleanup socket on unmount
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, [currentAnalysisId]);
   
   // Show first-time user guide
   useEffect(() => {
@@ -105,7 +155,7 @@ export function BorderlessExperience() {
     setResumeText(text);
   };
   
-  // Handle analysis with improved feedback
+  // Handle analysis with improved feedback and socket integration
   const handleAnalyze = async () => {
     if (jobDescription.length < 50) {
       toast({
@@ -118,8 +168,11 @@ export function BorderlessExperience() {
     
     if (isAnalyzing) return;
     
-    haptics.impact();
+    // Reset analysis steps and set analyzing state
+    setAnalysisSteps([]);
+    setCurrentAnalysisId(null);
     setIsAnalyzing(true);
+    haptics.impact();
     
     // Provide feedback that analysis is starting
     toast({
@@ -128,16 +181,49 @@ export function BorderlessExperience() {
     });
     
     try {
+      // Generate a unique ID for this analysis session
+      const analysisId = `analysis-${Date.now()}`;
+      setCurrentAnalysisId(analysisId);
+      
+      // Initialize socket for tracking progress
+      if (socketRef.current) {
+        socketRef.current.emit('start-analysis', { 
+          analysisId, 
+          jobDescription 
+        });
+      }
+      
+      // Perform the analysis
       const result = await analyzeJobDescription(jobDescription);
+      
+      // Save the analysis result
       setAnalysisResult(result);
+      
+      // Show success feedback
+      const hasWebSearch = !!(
+        result.webSearchResults?.role?.length || 
+        result.webSearchResults?.industry?.length || 
+        result.webSearchResults?.recruitment?.length || 
+        result.webSearchResults?.ats?.length
+      );
       
       toast({
         title: "Analysis Complete",
-        description: `Identified ${result.keywords.length} keywords for your resume.`,
+        description: hasWebSearch 
+          ? `Identified ${result.keywords.length} keywords with web-enhanced research.` 
+          : `Identified ${result.keywords.length} keywords for your resume.`,
         duration: 5000, // Show longer
       });
       
+      // If we already have analysis steps from the socket, use those
+      if (result.analysisSteps && result.analysisSteps.length > 0) {
+        setAnalysisSteps(result.analysisSteps);
+      }
+      
+      // Provide success haptic feedback
       haptics.success();
+      
+      // Navigate to the analysis view
       handleSectionChange('analysis');
     } catch (error) {
       toast({
@@ -146,6 +232,7 @@ export function BorderlessExperience() {
         variant: "destructive"
       });
       
+      // Provide error haptic feedback
       haptics.error();
     } finally {
       setIsAnalyzing(false);
@@ -249,7 +336,7 @@ export function BorderlessExperience() {
                   </div>
                 )}
                 
-                {/* Loading indicator */}
+                {/* Loading indicator with detailed step progress */}
                 {isAnalyzing && (
                   <motion.div 
                     className="flex flex-col items-center justify-center mt-6 py-6"
@@ -261,8 +348,56 @@ export function BorderlessExperience() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <p className="text-sm text-gray-700">Analyzing your job description...</p>
-                    <p className="text-xs text-gray-500 mt-1">Finding key skills and requirements</p>
+                    <p className="text-sm text-gray-700 mb-2">Analyzing your job description...</p>
+                    
+                    {/* Progress bar */}
+                    {analysisSteps.length > 0 && (
+                      <div className="w-full max-w-md mb-3">
+                        <div className="relative h-2 w-full bg-blue-100 rounded-full overflow-hidden">
+                          <div 
+                            className="absolute top-0 left-0 h-full bg-blue-600 transition-all duration-500 ease-in-out"
+                            style={{ 
+                              width: `${Math.floor(
+                                (analysisSteps.filter(step => step.status === 'completed').length + 
+                                (analysisSteps.filter(step => step.status === 'in-progress').length * 0.5)) / 
+                                analysisSteps.length * 100
+                              )}%` 
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Analysis steps */}
+                    <div className="w-full max-w-md space-y-1.5 border border-blue-100 rounded-lg p-3 bg-blue-50">
+                      {analysisSteps.map((step, index) => (
+                        <div key={index} className="flex gap-2 items-center text-xs py-1">
+                          {step.status === 'completed' ? (
+                            <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
+                          ) : step.status === 'in-progress' ? (
+                            <svg className="animate-spin h-4 w-4 text-blue-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                          ) : (
+                            <Clock className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          )}
+                          <span className={`${step.status === 'completed' ? 'text-gray-700' : step.status === 'in-progress' ? 'text-blue-700' : 'text-gray-400'}`}>
+                            {step.step}
+                          </span>
+                          {step.sources && step.sources.length > 0 && (
+                            <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">
+                              {step.sources.length} sources
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                      
+                      {/* Fallback when no steps are available yet */}
+                      {analysisSteps.length === 0 && (
+                        <p className="text-xs text-blue-600">Initializing analysis...</p>
+                      )}
+                    </div>
                   </motion.div>
                 )}
               </motion.div>
