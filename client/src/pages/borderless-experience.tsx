@@ -92,46 +92,47 @@ export function BorderlessExperience() {
 
   // Handle section change with improved feedback
   const handleSectionChange = (section: 'job' | 'resume' | 'analysis' | 'result') => {
-    // Don't allow navigation to Analysis if no result
+    // Only provide warnings but don't block navigation
+    // to prevent users from getting stuck
+    
+    // Give feedback but ALWAYS allow navigation
     if (section === 'analysis' && !analysisResult) {
       toast({
         title: "Analysis required",
         description: "Please analyze a job description first"
       });
       haptics.warning();
-      return;
     }
-    
-    // Don't allow navigation to Resume if no job description
-    if (section === 'resume' && !jobDescription) {
+    else if (section === 'resume' && !jobDescription) {
       toast({
         title: "Job description needed",
         description: "Please enter a job description first"
       });
       haptics.warning();
-      return;
     }
-    
-    // Don't allow navigation to Result if no optimization result
-    if (section === 'result' && !optimizationResult) {
+    else if (section === 'result' && !optimizationResult) {
       toast({
         title: "Optimization required",
         description: "Please optimize your resume first"
       });
       haptics.warning();
-      return;
+    }
+    else {
+      // Provide positive feedback
+      haptics.impact();
+      
+      // Provide contextual guidance based on section changes
+      if (section === 'resume' && !resumeText && jobDescription) {
+        toast({
+          title: "Ready for your resume",
+          description: "Tap below to enter your resume content"
+        });
+      }
     }
     
-    haptics.impact();
+    // ALWAYS change section regardless of validation
+    // This is critical to prevent users from getting stuck
     setActiveSection(section);
-    
-    // Provide contextual guidance based on section changes
-    if (section === 'resume' && !resumeText && jobDescription) {
-      toast({
-        title: "Ready for your resume",
-        description: "Tap below to enter your resume content"
-      });
-    }
   };
   
   // Handle job description change
@@ -363,7 +364,6 @@ export function BorderlessExperience() {
               className={`px-4 py-2 rounded-full text-sm ${activeSection === 'analysis' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleSectionChange('analysis')}
-              disabled={!analysisResult}
             >
               Analysis
             </motion.button>
@@ -371,7 +371,6 @@ export function BorderlessExperience() {
               className={`px-4 py-2 rounded-full text-sm ${activeSection === 'result' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleSectionChange('result')}
-              disabled={!optimizationResult}
             >
               Result
             </motion.button>
