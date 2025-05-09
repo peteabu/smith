@@ -520,6 +520,22 @@ export function BorderlessExperience() {
                   </div>
                 )}
                 
+                {/* If job description is too short, show guidance */}
+                {!isAnalyzing && jobDescription.length > 0 && jobDescription.length < 50 && (
+                  <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50">
+                    <div className="mb-2 text-sm text-amber-600 text-center">
+                      Add at least 50 characters to analyze the job description
+                    </div>
+                    <button
+                      className="analyze-button w-full bg-gray-300 text-gray-600 py-4 px-4 rounded-xl font-medium text-lg flex items-center justify-center gap-2 cursor-not-allowed"
+                      disabled={true}
+                    >
+                      <span>Analyze Job Description</span>
+                      <ArrowRight className="h-5 w-5" />
+                    </button>
+                  </div>
+                )}
+                
                 {/* Loading indicator with detailed step progress */}
                 {isAnalyzing && (
                   <motion.div 
@@ -634,6 +650,26 @@ export function BorderlessExperience() {
                 </div>
                 
                 {/* Sticky action bar for resume section - ALWAYS VISIBLE */}
+                {resumeText && !analysisResult && (
+                  <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50">
+                    <button
+                      className="continue-button w-full bg-blue-600 text-white py-4 px-4 rounded-xl font-medium text-lg flex items-center justify-center gap-2"
+                      onClick={() => {
+                        handleSectionChange('job');
+                        toast({
+                          title: "Resume saved",
+                          description: "Now add the job description to continue",
+                          duration: 3000
+                        });
+                      }}
+                    >
+                      <span>Continue to Job Description</span>
+                      <ArrowRight className="h-5 w-5" />
+                    </button>
+                  </div>
+                )}
+                
+                {/* Sticky action bar for resume section with optimization option */}
                 {resumeText && analysisResult && (
                   <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50">
                     <button
