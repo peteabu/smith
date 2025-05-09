@@ -604,31 +604,43 @@ export function MobileExperience() {
           ...getParallaxStyle()
         }}
       >
-        {/* Navigation indicators */}
-        <div className="absolute top-4 left-0 right-0 flex justify-center z-20 px-4">
-          <div className="flex space-x-2 bg-white/70 backdrop-blur-sm px-3 py-1.5 rounded-full">
+        {/* Navigation indicators and instructions */}
+        <div className="absolute top-4 left-0 right-0 flex flex-col items-center z-20 px-4 gap-2">
+          <div className="flex space-x-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm">
             {['upload', 'analyze', 'optimize', 'result'].map((s, i) => (
               <div 
                 key={i}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
                   stage === s ? 'bg-brown-dark scale-125' : 
                   navHistory.includes(s as any) ? 'bg-brown' : 'bg-brown/30'
                 }`}
               />
             ))}
           </div>
+          
+          {/* Navigation hint */}
+          <motion.div 
+            className="text-xs bg-white/70 backdrop-blur-sm px-3 py-1 rounded-full text-brown-dark font-medium shadow-sm"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ delay: 0.3 }}
+          >
+            Swipe left or right to navigate
+          </motion.div>
         </div>
         
-        {/* Back button */}
+        {/* Back button with text */}
         {navHistory.length > 1 && (
           <motion.button
-            className="absolute top-4 left-4 z-30 w-10 h-10 flex items-center justify-center rounded-full bg-white/70 backdrop-blur-sm shadow-md"
+            className="absolute top-4 left-4 z-30 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm shadow-md px-3 h-10"
             onClick={handleNavigateBack}
-            whileTap={{ scale: 0.92 }}
+            whileTap={{ scale: 0.95 }}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
           >
-            <X size={20} className="text-brown-dark" />
+            <X size={16} className="text-brown-dark mr-1" />
+            <span className="text-sm text-brown-dark font-medium">Back</span>
           </motion.button>
         )}
         
@@ -687,7 +699,7 @@ export function MobileExperience() {
               <div className="relative">
                 {/* Main action button */}
                 <motion.button
-                  className="w-14 h-14 rounded-full primary-action-button shadow-lg flex items-center justify-center haptic-button"
+                  className="px-5 h-14 rounded-full primary-action-button shadow-lg flex items-center justify-center haptic-button"
                   whileTap={{ scale: 0.92 }}
                   onClick={() => {
                     const primaryAction = getContextActions()[0];
@@ -704,7 +716,10 @@ export function MobileExperience() {
                     }
                   }}
                 >
-                  {getContextActions()[0]?.icon || <ArrowRight size={24} className="text-brown-dark" />}
+                  <div className="flex items-center gap-2">
+                    <span className="text-md font-medium text-brown-dark">{getContextActions()[0]?.label || 'Next'}</span>
+                    {getContextActions()[0]?.icon || <ArrowRight size={20} className="text-brown-dark" />}
+                  </div>
                 </motion.button>
                 
                 {/* Secondary actions */}
