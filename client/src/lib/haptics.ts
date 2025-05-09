@@ -1,179 +1,171 @@
 /**
- * Premium haptic feedback system
- * Designed to make your web app feel like a native iOS/Android experience
- */
-
-// Haptic feedback queue for more natural, non-overlapping haptics
-let hapticQueue: number[][] = [];
-let isProcessingQueue = false;
-
-// Check if the device supports the Vibration API
-const hasVibrationSupport = (): boolean => {
-  return 'vibrate' in navigator || 'mozVibrate' in navigator || 'webkitVibrate' in navigator;
-};
-
-/**
- * Apple-inspired vibration patterns for different interactions
- * Carefully tuned to mimic iOS taptic engine and Android haptics
- */
-export const HapticPatterns = {
-  // Ultra light tap for subtle interactions (like key presses)
-  SUBTLE: [3],
-  
-  // Light tap feedback (single short pulse)
-  LIGHT_TAP: [8],
-  
-  // Button press feedback (crisp medium pulse)
-  BUTTON_PRESS: [18],
-  
-  // Stronger impact for significant actions
-  IMPACT: [25],
-  
-  // Heavy impact for major actions
-  HEAVY_IMPACT: [35],
-  
-  // Success feedback (three pulses with increasing intensity)
-  SUCCESS: [12, 40, 18, 40, 25],
-  
-  // Warning feedback (two medium pulses)
-  WARNING: [30, 60, 30],
-  
-  // Error feedback (long pulse, pause, short pulse)
-  ERROR: [50, 40, 80],
-  
-  // Selection change feedback (very light)
-  SELECTION_CHANGE: [6],
-  
-  // Scroll haptic bump (like reaching a scroll threshold)
-  SCROLL_BUMP: [5],
-  
-  // Detent haptic (like reaching a snap point)
-  DETENT: [15, 40, 8],
-  
-  // Page transition (subtle double-tap)
-  PAGE_TRANSITION: [10, 30, 15],
-  
-  // Custom notification pattern
-  NOTIFICATION: [12, 60, 12, 60, 12]
-};
-
-// Process haptic feedback queue
-const processHapticQueue = async () => {
-  if (isProcessingQueue || hapticQueue.length === 0) return;
-  
-  isProcessingQueue = true;
-  const pattern = hapticQueue.shift();
-  
-  if (pattern) {
-    try {
-      if ('vibrate' in navigator) {
-        navigator.vibrate(pattern);
-      } else if ('mozVibrate' in navigator) {
-        (navigator as any).mozVibrate(pattern);
-      } else if ('webkitVibrate' in navigator) {
-        (navigator as any).webkitVibrate(pattern);
-      }
-      
-      // Calculate total duration of the pattern
-      const totalDuration = pattern.reduce((sum, duration) => sum + duration, 0) + 10;
-      
-      // Wait for the pattern to complete before processing next item
-      await new Promise(resolve => setTimeout(resolve, totalDuration));
-    } catch (error) {
-      // Fail silently - haptic feedback is non-essential
-      console.debug('Haptic feedback error:', error);
-    }
-  }
-  
-  isProcessingQueue = false;
-  
-  // Process next item if available
-  if (hapticQueue.length > 0) {
-    processHapticQueue();
-  }
-};
-
-/**
- * Trigger haptic feedback based on the provided pattern
- * Uses a queue system to prevent overlapping haptics for a more natural feel
- * Falls back gracefully on devices without vibration support
+ * Advanced haptic feedback system for premium mobile experiences
  * 
- * @param pattern Vibration pattern array (durations in ms)
- * @param priority If true, adds to front of queue
+ * This system provides a complete range of haptic patterns that mimic
+ * the sophisticated taptic engine found in iOS devices and high-end
+ * Android devices, creating a truly native app-like feel.
  */
-export const triggerHaptic = (
-  pattern: number[] = HapticPatterns.BUTTON_PRESS,
-  priority: boolean = false
-): void => {
-  if (!hasVibrationSupport()) return;
-  
-  // Add to appropriate place in queue
-  if (priority) {
-    hapticQueue.unshift(pattern);
-  } else {
-    hapticQueue.push(pattern);
-  }
-  
-  // Start processing if not already
-  if (!isProcessingQueue) {
-    processHapticQueue();
-  }
+
+interface HapticOptions {
+  // Duration in milliseconds
+  duration?: number;
+  // Strength from 0-1
+  intensity?: number;
+  // Pattern type
+  pattern?: 'sharp' | 'medium' | 'soft' | 'rigid' | 'heavy';
+}
+
+const DEFAULT_OPTIONS: HapticOptions = {
+  duration: 20,
+  intensity: 0.5,
+  pattern: 'medium'
 };
 
 /**
- * A higher-level API for premium haptic feedback
- * Designed to make your app feel like a native iOS/Android experience
+ * Core haptic engine for standardized vibration patterns
  */
-export const haptics = {
-  // Ultra light feedback for subtle interactions
-  subtle: () => triggerHaptic(HapticPatterns.SUBTLE),
+function vibrate(pattern: number[] | number, options?: HapticOptions) {
+  // Skip if vibration is not available
+  if (!navigator.vibrate) return;
   
-  // Light tap for regular interactions
-  tap: () => triggerHaptic(HapticPatterns.LIGHT_TAP),
-  
-  // Medium feedback for button presses
-  press: () => triggerHaptic(HapticPatterns.BUTTON_PRESS),
-  
-  // Stronger feedback for primary actions (high priority)
-  impact: () => triggerHaptic(HapticPatterns.IMPACT, true),
-  
-  // Extra strong feedback for major actions (high priority)
-  heavyImpact: () => triggerHaptic(HapticPatterns.HEAVY_IMPACT, true),
-  
-  // Success feedback (high priority)
-  success: () => triggerHaptic(HapticPatterns.SUCCESS, true),
-  
-  // Warning feedback
-  warning: () => triggerHaptic(HapticPatterns.WARNING),
-  
-  // Error feedback (high priority)
-  error: () => triggerHaptic(HapticPatterns.ERROR, true),
-  
-  // Selection change feedback (very light)
-  selectionChange: () => triggerHaptic(HapticPatterns.SELECTION_CHANGE),
-  
-  // Scroll bump sensation
-  scrollBump: () => triggerHaptic(HapticPatterns.SCROLL_BUMP),
-  
-  // Detent sensation (like reaching a threshold)
-  detent: () => triggerHaptic(HapticPatterns.DETENT),
-  
-  // Page transition feedback
-  pageTransition: () => triggerHaptic(HapticPatterns.PAGE_TRANSITION, true),
-  
-  // Notification feedback pattern
-  notification: () => triggerHaptic(HapticPatterns.NOTIFICATION),
-  
-  // Clear any pending haptic feedback
-  clear: () => {
-    hapticQueue = [];
-    if (hasVibrationSupport()) {
-      navigator.vibrate(0); // Stop any current vibration
-    }
-  },
-  
-  // Check if device supports haptics
-  isSupported: hasVibrationSupport
-};
+  try {
+    navigator.vibrate(pattern);
+  } catch (error) {
+    console.error('Haptic feedback error:', error);
+  }
+}
 
-export default haptics;
+/**
+ * Returns whether device supports haptic feedback
+ */
+function isSupported(): boolean {
+  return !!navigator.vibrate;
+}
+
+/**
+ * Selection tap feedback (light)
+ */
+function tap(options?: HapticOptions) {
+  const opts = { ...DEFAULT_OPTIONS, ...options, duration: 15, intensity: 0.3 };
+  vibrate(opts.duration || 15);
+}
+
+/**
+ * Medium impact feedback
+ */
+function impact(options?: HapticOptions) {
+  const opts = { ...DEFAULT_OPTIONS, ...options };
+  const duration = opts.duration || 20;
+  
+  // A single short vibration
+  vibrate(duration);
+}
+
+/**
+ * Heavy impact feedback for significant actions
+ */
+function heavyImpact(options?: HapticOptions) {
+  // Create a harder hit with a burst pattern
+  vibrate([10, 20, 30]);
+}
+
+/**
+ * Success feedback pattern 
+ */
+function success(options?: HapticOptions) {
+  // Double-tap with increasing intensity
+  vibrate([15, 10, 30]);
+}
+
+/**
+ * Warning feedback pattern
+ */
+function warning(options?: HapticOptions) {
+  // Triple pulse
+  vibrate([10, 30, 10, 30, 10]);
+}
+
+/**
+ * Error feedback pattern
+ */
+function error(options?: HapticOptions) {
+  // More intense irregular pattern
+  vibrate([10, 10, 20, 10, 40]);
+}
+
+/**
+ * Detent feedback (mechanical stop feel)
+ */
+function detent(options?: HapticOptions) {
+  vibrate(5);
+}
+
+/**
+ * Page transition feedback
+ */
+function pageTransition(options?: HapticOptions) {
+  vibrate([5, 15, 10]);
+}
+
+/**
+ * Notification feedback
+ */
+function notification(options?: HapticOptions) {
+  vibrate([10, 20, 10, 20, 20]);
+}
+
+/**
+ * Selection change feedback
+ */
+function selectionChanged(options?: HapticOptions) {
+  vibrate(8);
+}
+
+/**
+ * Create a custom haptic pattern
+ */
+function custom(pattern: number[], options?: HapticOptions) {
+  vibrate(pattern);
+}
+
+/**
+ * Subtle feedback (very light)
+ */
+function subtle(options?: HapticOptions) {
+  vibrate(3);
+}
+
+/**
+ * Press feedback (sustained press)
+ */
+function press(options?: HapticOptions) {
+  vibrate(30);
+}
+
+/**
+ * Selection change feedback (alias for selectionChanged)
+ */
+function selectionChange(options?: HapticOptions) {
+  selectionChanged(options);
+}
+
+/**
+ * Common haptic feedback patterns from iOS/Android
+ */
+export default {
+  tap,
+  impact,
+  heavyImpact,
+  success,
+  warning,
+  error,
+  detent,
+  pageTransition,
+  notification,
+  selectionChanged,
+  selectionChange, // Alias for backward compatibility
+  subtle,
+  press,
+  custom,
+  isSupported
+};
