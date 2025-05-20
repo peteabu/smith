@@ -179,7 +179,7 @@ const Sidebar = React.forwardRef<
     },
     ref
   ) => {
-    const { state, openMobile, setOpenMobile, isMobile } = useSidebar()
+    const { state, openMobile, setOpenMobile, isSmallScreen } = useSidebar()
 
     if (collapsible === "none") {
       return (
@@ -196,9 +196,6 @@ const Sidebar = React.forwardRef<
       )
     }
 
-    // Use responsive approach for all screen sizes
-    const isSmallScreen = typeof window !== 'undefined' && window.innerWidth < 768;
-    
     if (isSmallScreen) {
       return (
         <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
@@ -564,7 +561,7 @@ const SidebarMenuButton = React.forwardRef<
     ref
   ) => {
     const Comp = asChild ? Slot : "button"
-    const { isMobile, state } = useSidebar()
+    const { isSmallScreen, state } = useSidebar()
 
     const button = (
       <Comp
@@ -593,7 +590,7 @@ const SidebarMenuButton = React.forwardRef<
         <TooltipContent
           side="right"
           align="center"
-          hidden={state !== "collapsed" || isMobile}
+          hidden={state !== "collapsed" || isSmallScreen}
           {...tooltip}
         />
       </Tooltip>
