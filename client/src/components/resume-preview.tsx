@@ -82,8 +82,16 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
     try {
       let content = '';
       
+      // When copying the text currently displayed on screen
+      if (format === 'text' && !useOriginal && optimizedCV.optimizedContent) {
+        // Extract plain text from the HTML content that's currently displayed
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = optimizedCV.optimizedContent;
+        content = tempDiv.textContent || tempDiv.innerText || '';
+        console.log("Using current displayed content for copying");
+      }
       // If format is markdown and we have the markdownContent directly, use it
-      if (format === 'markdown' && optimizedCV.markdownContent && !useOriginal) {
+      else if (format === 'markdown' && optimizedCV.markdownContent && !useOriginal) {
         content = optimizedCV.markdownContent;
         console.log("Using direct markdown content for copying");
       } else {

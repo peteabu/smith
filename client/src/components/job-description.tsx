@@ -28,8 +28,31 @@ interface AnalysisProgress {
   step: AnalysisStep;
 }
 
+// Local storage key for job description
+const JOB_DESCRIPTION_STORAGE_KEY = 'savedJobDescription';
+
+// Save job description to local storage
+const saveJobDescription = (text: string) => {
+  try {
+    localStorage.setItem(JOB_DESCRIPTION_STORAGE_KEY, text);
+  } catch (error) {
+    console.error("Failed to save job description to local storage:", error);
+  }
+};
+
+// Load job description from local storage
+const loadJobDescription = (): string => {
+  try {
+    return localStorage.getItem(JOB_DESCRIPTION_STORAGE_KEY) || "";
+  } catch (error) {
+    console.error("Failed to load job description from local storage:", error);
+    return "";
+  }
+};
+
 export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps) {
-  const [value, setValue] = useState("");
+  // Initialize with saved content from localStorage
+  const [value, setValue] = useState(() => loadJobDescription());
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisSteps, setAnalysisSteps] = useState<AnalysisStep[]>([]);
   const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
@@ -176,6 +199,13 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
     }
   }, [isAnalyzing]);
   
+  // Save job description whenever it changes
+  useEffect(() => {
+    if (value) {
+      saveJobDescription(value);
+    }
+  }, [value]);
+
   // State for immersive editor
   const [isImmersiveEditing, setIsImmersiveEditing] = useState(false);
   
@@ -188,6 +218,9 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
   // Close the immersive editor
   const closeImmersiveEditor = () => {
     setIsImmersiveEditing(false);
+    
+    // Save the current job description to localStorage
+    saveJobDescription(value);
   };
   
   return (
