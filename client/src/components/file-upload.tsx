@@ -165,7 +165,7 @@ export function FileUpload({ onCvUploaded }: TextResumeInputProps) {
       <div className="bg-white border border-brown/30 rounded-lg p-6 paper-shadow">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
           <div>
-            <h2 className="font-display text-lg">{hasSavedResume ? "Your saved resume" : "Welcome to CV Optimizer"}</h2>
+            <h2 className="font-display text-lg">{hasSavedResume ? "Your saved resume" : "Welcome to Mimic"}</h2>
             <p className="text-sm text-brown">
               {hasSavedResume 
                 ? (
