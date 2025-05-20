@@ -203,7 +203,7 @@ function optimizeCV(cvText: string, keywords: string[]): {
     ? Math.round((matchingKeywords.length / keywords.length) * 100)
     : 0;
   
-  // Generate a simple HTML representation of the CV with highlighted keywords
+  // Generate a simple HTML representation of the resume with highlighted keywords
   const htmlParts: string[] = [];
   const paragraphs = cvText.split('\n\n');
   

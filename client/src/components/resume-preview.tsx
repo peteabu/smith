@@ -56,13 +56,13 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
       
       toast({
         title: "Export started",
-        description: `Your ${cvType} CV is exporting as ${formatName}`,
+        description: `Your ${cvType} resume is exporting as ${formatName}`,
       });
     } catch (error) {
       console.error('Export error:', error);
       toast({
         title: "Export failed",
-        description: "Failed to export CV. Please try again.",
+        description: "Failed to export resume. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -127,7 +127,7 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
       
       toast({
         title: "Copied to clipboard",
-        description: `Your ${cvType} CV has been copied as ${formatName}`,
+        description: `Your ${cvType} resume has been copied as ${formatName}`,
       });
     } catch (error) {
       console.error('Copy error:', error);
@@ -271,7 +271,7 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
                   ) : (
                     <Copy className="h-5 w-5 mr-2 text-green-600" />
                   )}
-                  <span>Copy Complete Optimized Resume as Text</span>
+                  <span>Copy Complete Mimic Resume as Text</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -285,9 +285,9 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
             <div className="w-24 h-24 flex items-center justify-center mb-4 border-2 border-dashed border-brown/30 rounded-lg">
               <FileCode className="w-10 h-10 text-brown/40" />
             </div>
-            <h3 className="font-display text-lg mb-2">No CV Optimized Yet</h3>
+            <h3 className="font-display text-lg mb-2">No Resume Optimized Yet</h3>
             <p className="text-sm max-w-xs">
-              Upload your base CV and paste a job description to generate an optimized resume
+              Upload your base resume and paste a job description to generate an optimized version
             </p>
           </div>
         ) : (
