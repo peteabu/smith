@@ -88,7 +88,7 @@ function createPDF(content: string, format: 'pdf' | 'latex' = 'pdf'): Buffer {
   
   // Add title
   doc.font('Helvetica-Bold').fontSize(fontSize.title)
-    .text('Professional Resume', { align: 'center' });
+    .text('Mimic Resume', { align: 'center' });
   doc.moveDown(1);
   
   // Clean HTML content
@@ -786,7 +786,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         exportContent = `<html>
 <head>
   <meta charset="UTF-8">
-  <title>Professional Resume</title>
+  <title>Mimic Resume</title>
   <style>
     body { font-family: Arial, sans-serif; }
     h1, h2, h3 { font-weight: bold; }
@@ -794,7 +794,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   </style>
 </head>
 <body>
-  <h1>Professional Resume</h1>
+  <h1>Mimic Resume</h1>
   ${contentToUse
     .replace(/<span class="bg-green-100[^>]*>([\s\S]*?)<\/span>/gi, '<span class="highlight">$1</span>')
     .replace(/<div class="[^"]*">/gi, '<div>')

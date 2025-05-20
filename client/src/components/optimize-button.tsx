@@ -37,14 +37,14 @@ export function OptimizeButton({
           <>
             <Wand2 className="mr-2 h-5 w-5 text-brown-dark" />
             <span className="text-brown-dark font-bold">
-              Optimize CV
+              Optimize Resume
             </span>
           </>
         )}
       </button>
       
       <p className="mt-3 text-xs text-brown font-mono">
-        Analyzes and tailors your CV to match job requirements
+        Analyzes and tailors your resume to match job requirements
       </p>
     </div>
   );
