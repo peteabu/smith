@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Menu, Check, X, MoreVertical } from 'lucide-react';
-import haptics from '@/lib/haptics';
-import { useDeviceDetection } from '@/hooks/use-device-detection';
 
 interface ImmersiveEditorProps {
   value: string;
@@ -35,8 +33,6 @@ export function ImmersiveEditor({
 }: ImmersiveEditorProps) {
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const device = useDeviceDetection();
-  
   // Automatically focus on mount
   useEffect(() => {
     // Short delay to allow animations to complete
@@ -53,7 +49,6 @@ export function ImmersiveEditor({
   // Handle focus events
   const handleFocus = () => {
     setIsFocused(true);
-    haptics.subtle();
   };
 
   // Handle blur events
@@ -63,13 +58,11 @@ export function ImmersiveEditor({
 
   // Handle done action
   const handleDone = () => {
-    haptics.impact();
     onDone();
   };
 
   // Handle cancel action
   const handleCancel = () => {
-    haptics.impact();
     if (onCancel) onCancel();
   };
 
