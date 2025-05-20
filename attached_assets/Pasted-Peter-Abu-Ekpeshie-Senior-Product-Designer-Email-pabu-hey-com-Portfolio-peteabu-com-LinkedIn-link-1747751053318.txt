@@ -1,0 +1,104 @@
+Peter Abu-Ekpeshie
+Senior Product Designer
+Email: pabu@hey.com
+Portfolio: peteabu.com
+LinkedIn: linkedin.com/in/peteabu
+Summary
+Accomplished Product Designer with 6+ years of experience building and designing user-
+centred solutions for fintech, crypto, B2B SaaS and e-commerce startups. Proven ability
+to lead UX/UI design initiatives, from concept to launch, for complex platforms including
+crypto trading and remittance, B2B payment solutions, and financial SaaS products.
+Contributed to∼500K in pre-seed funding for startups by driving innovative, data-driven,
+and scalable design solutions. Specializes in data-driven design, rapid prototyping, and
+scalable solutions, improving financial accessibility and user experience by∼30% across
+diverse financial, technology, and commerce sectors.
+Core Skills
+• Product Design and Strategy
+• User Research and Analytics
+• Usability Testing
+• Behavioural Analytics
+• UX/UI Design & Wireframing
+• Augmented Research
+• Cross-Functional Team Leadership
+• Design and Prototyping
+• Data Visualization
+• Conversational Interface Design
+
+Tools & Technologies
+Design, Wireframing & Prototyping: Figma, Sketch, Adobe XD, Jitter, Framer,
+Webflow, Balsamiq, Miro, FigJam, Axure, Play
+Analytics Testing: PostHog, Hotjar, Google Analytics, Dovetail
+Development (Basic): HTML, CSS, JS, v0.dev, Stackblitz (Bolt.new)
+Augmented Research: ChatGPT, Claude
+Professional Experience
+Eligible AI - Senior Product Designer September 2023 – Present
+Eligible AI is a technology-driven mortgage service provider leveraging AI/ML for con-
+sumer education and lender retention in the UK.
+• Conducted qualitative user research and in-depth data analysis using PostHog to
+identify high-impact UX improvements.
+• Redesigned the customer-facing educational module, increasing customer engage-
+ment by 52%.
+• Enhanced a priority-based actioning system for portfolio customers while ensuring
+compliance with industry standards.
+• Developed structured methods for capturing consumer intent and decision-making
+across the lifecycle.
+• Designed an innovative switch-date selection feature, leading to a 20% increase in
+mortgage switch rates.
+• Led end-to-end design implementation of feature releases, collaborating closely with
+product, engineering, and data teams.
+• Contributed to product strategy development and roadmap planning, securing new
+customer acquisitions, key clients, and strategic partnerships.
+• Facilitated product discovery workshops and enterprise customer onboarding pro-
+cesses.
+Abacus - Head Product Designer January 2022 – September 2023
+Abacus is a financial management platform enabling users to track, manage, and optimise
+their assets.
+• Designed and launched a unified asset-tracking app, empowering 3K users with
+∼5K accounts to manage banking, investment, and crypto services.
+• Created ”Pockets,” a budgeting tool that enables users to segment funds into mini-
+wallets for improved financial planning.
+• Designed UX flows for transaction categorisation, financial insights, bill payments,
+and seamless bank-to-bank transfers, processing NGN 100M+ in transactions within
+six months.
+2
+• Developed fundraising decks and product artefacts, helping secure $100K in pre-
+seed funding.
+Helicarrier (BuyCoins) - Senior Product Designer December 2021 – September
+2023
+Hellicarrier is a fintech company building crypto infrastructure for Africa.
+• Led the design of SendCash, a cross-border crypto and fiat remittance platform
+processing over $2M in monthly transactions and ¿$1Bn in lifetime transaction
+volume.
+• Designed BuyCoins Pro, a crypto trading and investment platform, improving us-
+ability and user engagement.
+• Developed the MVP of Gandalf, a venture studio product for token-gated content,
+securing $350K in pre-seed funding and admission to the A16Z Crypto Startup
+School.
+• Collaborated with product managers and engineers to develop and rapidly scale
+product features.
+TradeDepot - Product Designer November 2020 – December 2021
+TradeDepot is a B2B e-commerce tech solution for wholesalers and retailers in emerging
+markets.
+• Led UX/UI redesign for ShopTopUp, a B2B e-commerce and embedded finance
+platform with 150K+ active users, improving operational efficiency by 25%.
+• Designed ShopTopUp Pay, a payment collection app servicing 120K informal retail-
+ers and suppliers, increasing retailer satisfaction by 20%.
+Education
+Kingston University - London, UK 2022 – 2023
+2013 – 2017
+MSc. User Experience Design (Distinction),
+Federal University of Agriculture - Abeokuta, Nigeria BSc. Computer Science,
+Personal Projects
+Tippr - Co-founder & Lead Designer
+Tippr is a platform that allows creators, service providers, and content makers to easily
+accept tips and support from fans and patrons.
+Wisha - Co-founder & Lead Designer
+Wisha is a social gifting and celebration platform for creating and managing wish lists
+for special occasions.
+
+Volunteering Activities
+Develop for Good - Product Design Mentor
+Provides mentorship to aspiring professionals and students by guiding and supervising
+their in-product design portfolios.
+Stutern Graduate Accelerator - UI/UX Design Guest Mentor
+Trains graduates in UI/UX best practices and workplace navigation for product designers.
