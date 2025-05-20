@@ -153,7 +153,7 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
   return (
     <div className="bg-paper-texture bg-cover rounded-lg overflow-hidden paper-shadow">
       <div className="bg-moss/10 backdrop-blur-sm p-4 flex justify-between items-center border-b border-brown/20">
-        <h2 className="font-display text-lg">Optimized CV Preview</h2>
+        <h2 className="font-display text-lg">Optimized Resume Preview</h2>
         
         {optimizedCV && !hasError && (
           <div id="export-dropdown" className="flex space-x-2">

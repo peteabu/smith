@@ -89,8 +89,8 @@ export function MobileHome() {
       setActiveStep('result');
       
       toast({
-        title: 'CV Optimized',
-        description: 'Your CV has been optimized successfully.',
+        title: 'Resume Optimized',
+        description: 'Your resume has been optimized successfully.',
       });
       
       // Add success haptic feedback
@@ -181,7 +181,7 @@ export function MobileHome() {
           navigator.clipboard.writeText(optimizedCV.optimizedContent || '');
           toast({
             title: 'Copied',
-            description: 'Optimized CV copied to clipboard',
+            description: 'Optimized resume copied to clipboard',
           });
           haptics.success();
         }
@@ -231,7 +231,7 @@ export function MobileHome() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <h1 className="font-display text-2xl mb-2 text-brown-dark text-center">CV Optimizer</h1>
+            <h1 className="font-display text-2xl mb-2 text-brown-dark text-center">Mimic</h1>
             <p className="text-brown text-center text-sm">Optimize your resume for ATS systems</p>
           </motion.div>
           

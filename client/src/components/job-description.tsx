@@ -194,7 +194,7 @@ export function JobDescription({ cvId, onAnalysisComplete }: JobDescriptionProps
     <div className="bg-white rounded-lg p-5 sm:p-6 paper-shadow">
       <h2 className="font-display text-lg mb-2 sm:mb-3">Job Description</h2>
       <p className="text-sm text-brown mb-3 sm:mb-4">
-        Paste the job posting to analyze and optimize your CV
+        Paste the job posting to analyze and optimize your resume
       </p>
       
       <div className="space-y-3">
