@@ -118,7 +118,7 @@ export default function Home() {
   return (
     <>
       <Helmet>
-        <title>CV Optimizer - ATS-friendly resume builder</title>
+        <title>Mimic - ATS-friendly resume builder</title>
         <meta name="description" content="Optimize your resume for ATS systems by analyzing job descriptions and highlighting key skills and keywords." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
@@ -267,7 +267,7 @@ export default function Home() {
         </main>
         
         <footer className="text-center py-4 sm:py-6 text-brown text-xs safe-bottom mt-4">
-          <p>CV Optimizer &copy; {new Date().getFullYear()} | A minimal ATS-friendly resume builder</p>
+          <p>Mimic &copy; {new Date().getFullYear()} | A minimal ATS-friendly resume builder</p>
         </footer>
         
         <NotificationToast />
