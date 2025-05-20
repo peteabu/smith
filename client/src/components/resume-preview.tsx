@@ -87,8 +87,20 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
         // Extract plain text from the HTML content that's currently displayed
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = optimizedCV.optimizedContent;
+        
+        // Remove summary and keywords sections that shouldn't be part of the resume
+        const summaryElement = tempDiv.querySelector('.resume-optimization-summary');
+        if (summaryElement) {
+          summaryElement.remove();
+        }
+        
+        const keywordsElement = tempDiv.querySelector('.keywords-section');
+        if (keywordsElement) {
+          keywordsElement.remove();
+        }
+        
         content = tempDiv.textContent || tempDiv.innerText || '';
-        console.log("Using current displayed content for copying");
+        console.log("Using current displayed content for copying (with summary/keywords removed)");
       }
       // If format is markdown and we have the markdownContent directly, use it
       else if (format === 'markdown' && optimizedCV.markdownContent && !useOriginal) {
