@@ -130,7 +130,7 @@ export default function Home() {
           <div className="absolute right-4 top-1/2 -translate-y-1/2">
             <ProfileMenu onResumeUpdated={handleCvUploaded} />
           </div>
-          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl text-brown-dark tracking-wide">CV Optimizer</h1>
+          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl text-brown-dark tracking-wide">Mimic</h1>
           <p className="font-mono text-xs sm:text-sm mt-1 sm:mt-2 text-brown opacity-80">ATS-friendly resume tailoring</p>
         </header>
         

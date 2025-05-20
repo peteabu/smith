@@ -203,8 +203,8 @@ export function MobileHome() {
       onClick: () => {
         if (optimizedCV && navigator.share) {
           navigator.share({
-            title: 'My Optimized CV',
-            text: 'Check out my optimized CV',
+            title: 'My Mimic Resume',
+            text: 'Check out my optimized resume',
           }).then(() => {
             haptics.success();
           }).catch((error) => {
