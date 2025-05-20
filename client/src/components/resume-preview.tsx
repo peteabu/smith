@@ -231,14 +231,6 @@ export function ResumePreview({ optimizedCV }: ResumePreviewProps) {
                         <Code className="h-4 w-4 mr-2" />
                         <span>Markdown (.md)</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleExport('docx')}>
-                        <File className="h-4 w-4 mr-2" />
-                        <span>Word-compatible (.html)</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleExport('pdf')}>
-                        <FileText className="h-4 w-4 mr-2" />
-                        <span>PDF (.pdf)</span>
-                      </DropdownMenuItem>
                     </DropdownMenuSubContent>
                   </DropdownMenuSub>
                   
