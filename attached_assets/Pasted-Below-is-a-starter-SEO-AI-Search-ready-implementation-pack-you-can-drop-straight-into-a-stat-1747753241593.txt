@@ -1,0 +1,185 @@
+Below is a **starter “SEO & AI-Search-ready” implementation pack** you can drop straight into a static site, a React/Next.js app, or Replit’s web server.
+
+> **Copy / paste as-is, then adjust URLs, pricing, and copy to fit the final brand voice.**
+
+---
+
+## 1. `<head>` boilerplate (traditional SEO + social cards)
+
+```html
+<!-- pages/_document.js or public/index.html -->
+<head>
+  <meta charSet="utf-8" />
+  <title>Mimic — Tailor your résumé to every role</title>
+
+  <!-- Primary description (≤155 chars) -->
+  <meta name="description"
+        content="Mimic adapts your résumé to any job description in seconds, optimising for ATS and AI-powered hiring tools." />
+
+  <!-- Canonical & language -->
+  <link rel="canonical" href="https://mimic.so/" />
+  <meta http-equiv="content-language" content="en-gb" />
+
+  <!-- Open Graph / Twitter (large image) -->
+  <meta property="og:type"               content="website" />
+  <meta property="og:url"                content="https://mimic.so/" />
+  <meta property="og:title"              content="Mimic — Tailor your résumé to every role" />
+  <meta property="og:description"        content="Mimic adapts your résumé to match any job ad with one click." />
+  <meta property="og:image"              content="https://mimic.so/og-cover.png" />
+  <meta name="twitter:card"              content="summary_large_image" />
+  <meta name="twitter:site"              content="@mimic_app" />
+
+  <!-- Mobile & PWA basics -->
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="/favicon.ico" />
+</head>
+```
+
+---
+
+## 2. JSON-LD structured data (helps both Google & LLMs)
+
+### **SoftwareApplication** (core rich-result type)
+
+```html
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Mimic",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "url": "https://mimic.so/",
+  "description": "Mimic instantly adapts résumés to any job description, boosting ATS scores and interview rates.",
+  "brand": { "@type": "Brand", "name": "Mimic" },
+  "offers": {
+    "@type": "Offer",
+    "price": "0.00",
+    "priceCurrency": "USD"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "ratingCount": "187"
+  }
+}
+</script>
+```
+
+### **FAQPage** (good for voice / AI answers) — optional
+
+*(Google now limits FAQ rich-results for most sites, but the markup still feeds generative engines.)* ([developers.google.com][1], [developers.google.com][2])
+
+```html
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [{
+      "@type": "Question",
+      "name": "Does Mimic work with any ATS?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Mimic rewrites your résumé using ATS-friendly formatting and keywords, then exports to PDF or DOCX."
+      }
+    },{
+      "@type": "Question",
+      "name": "Is there a free plan?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Absolutely. Create two customised résumés per month at no cost; upgrade for unlimited versions."
+      }
+    }]
+}
+</script>
+```
+
+---
+
+## 3. Sitemap & robots
+
+**`/public/robots.txt`**
+
+```
+User-agent: *
+Disallow:
+Sitemap: https://mimic.so/sitemap.xml
+```
+
+**`scripts/generate-sitemap.js` (Node)**
+
+```js
+// Run: node scripts/generate-sitemap.js
+import { writeFileSync } from "fs";
+
+const pages = ["", "pricing", "blog", "blog/ai-resume-tips"];
+const base  = "https://mimic.so";
+
+const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9">
+${pages.map(p => `<url><loc>${base}/${p}</loc></url>`).join("\n")}
+</urlset>`;
+
+writeFileSync("public/sitemap.xml", xml);
+console.log("✅  sitemap.xml generated");
+```
+
+Add `npm run build:sitemap` to your CI pipeline so the file stays fresh.
+
+---
+
+## 4. Performance & technical signals
+
+| Area                           | What to do                                                                                   | Why it matters                                                                                 |
+| ------------------------------ | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Rendering**                  | Use **Next.js / Remix** for SSR or static export; avoid client-only React for critical pages | HTML is fully crawlable; faster **First Contentful Paint (FCP)** boosts rankings               |
+| **Core Web Vitals**            | Target LCP < 1.8 s, CLS < 0.1, FID/FCP good                                                  | Direct ranking factor since 2021                                                               |
+| **Images**                     | Serve WebP/AVIF, lazy-load `<img loading="lazy">`, add descriptive `alt`                     | Speeds pages; alt text feeds image search & LLMs                                               |
+| **Accessibility**              | Use semantic HTML5 (`<header>`, `<main>`, `<nav>`); ARIA labels sparingly                    | Better UX + positive quality signals                                                           |
+| **HTTPS & HSTS**               | Enforce `https://` and `Strict-Transport-Security` header                                    | Security signal & Chrome trust                                                                 |
+| **Structured content updates** | Re-validate JSON-LD after every release (Google Rich Results Test)                           | Accuracy keeps rich snippets eligible ([developers.google.com][3], [developers.google.com][4]) |
+
+---
+
+## 5. Content patterns that LLM search engines surface first
+
+1. **Explain, then show**
+
+   * Short intro paragraph (≤40 words) that directly answers *one* user intent.
+   * Follow with a detailed section (`<h2>Deep dive…>`) for depth—LLMs quote these sections verbatim.
+
+2. **Dedicated comparison pages**
+   “Mimic vs. Zety”, “Mimic vs. Resume.io” — search engines love focused, entity-rich comparisons.
+
+3. **Schema-backed FAQs & How-tos**
+   Even if Google’s rich-result is limited, structured Q\&A still feeds Bard/Gemini & OpenAI’s answers.
+
+4. **First-party data & stats**
+   Publish anonymised metrics (“average ATS score improvement 27% across 3 000 résumés”). Novel data = link magnets.
+
+5. **Clear author & company ‘About’ pages**
+   Expertise-Authority-Trust (E-E-A-T) signals are pulled into AI summaries; list your credentials prominently.
+
+---
+
+## 6. Quick-check launch checklist
+
+* [ ] **Indexability:** `index,follow` meta default; no accidental `noindex`.
+* [ ] **Unique title & meta description** on every page.
+* [ ] **Canonical** tags on variant URLs.
+* [ ] **Open Graph** image (1200 × 630 px) with legible text.
+* [ ] **Sitemap ping** to Google & Bing on deploy (`curl https://www.google.com/ping?sitemap=…`).
+* [ ] **Structured data validates** (Rich Results Test).
+* [ ] **Google Search Console** & **Bing Webmaster** verified.
+* [ ] **Blog** (Markdown/MDX) auto-publishes RSS feed — useful for AI crawlers.
+
+---
+
+### Need more?
+
+*I can help script the full Next.js layout, set up a blog MDX pipeline, or draft high-impact evergreen articles (“Best Resume Keywords for 2025 ATS”). Just let me know which piece you’d like next — happy to dive deeper!*
+
+[1]: https://developers.google.com/search/docs/appearance/structured-data/faqpage "Mark Up FAQs with Structured Data | Google Search Central"
+[2]: https://developers.google.com/search/blog/2023/08/howto-faq-changes "Changes to HowTo and FAQ rich results | Google Search Central Blog"
+[3]: https://developers.google.com/search/docs/appearance/structured-data/software-app "Software App (SoftwareApplication) Schema | Google Search Central"
+[4]: https://developers.google.com/search/docs/appearance/structured-data/search-gallery "Structured Data Markup that Google Search Supports | Documentation"
